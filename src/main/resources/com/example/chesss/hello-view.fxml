@@ -5,12 +5,25 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.chesss.HelloController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-    </padding>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.GridPane?>
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.chesss.ChessController">
+      <HBox fx:id="main">
+            <VBox fx:id="left">
+                  <HBox fx:id="topPlayer">
 
-    <Label fx:id="welcomeText"/>
-    <Button text="Hello!" onAction="#onHelloButtonClick"/>
-</VBox>
+                  </HBox>
+                  <GridPane fx:id="board" >
+
+                  </GridPane>
+                  <HBox fx:id="bottomPlayer" >
+
+                  </HBox>
+            </VBox>
+            <VBox fx:id="right">
+
+            </VBox>
+      </HBox>
+</StackPane>
