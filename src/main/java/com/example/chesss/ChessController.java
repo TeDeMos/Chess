@@ -4,10 +4,14 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
+import javax.swing.text.Element;
+import javafx.scene.image.ImageView;
 
 public class ChessController {
     @FXML
@@ -46,7 +50,8 @@ public class ChessController {
         board.maxHeightProperty().bind(boardHeight);
         bottomPlayer.minHeightProperty().bind(playerInfoHeight);
         bottomPlayer.maxHeightProperty().bind(playerInfoHeight);
-        NumberBinding gridSide = boardHeight.divide(8);
+        NumberBinding gridSide = boardHeight.divide(9);
+        ImageHandler.init();
         boardPanes = new StackPane[10][10];
         for (int x = 0; x < 10; x++) {
             NumberBinding gridWidth = x == 0 || x == 9 ? gridSide.divide(2) : gridSide;
@@ -57,8 +62,22 @@ public class ChessController {
                 stack.maxWidthProperty().bind(gridWidth);
                 stack.minHeightProperty().bind(gridHeight);
                 stack.maxHeightProperty().bind(gridHeight);
-                stack.setStyle("-fx-border-color: brown; -fx-border-width: 3px;");
+                ImageView view;
+                if ((x == 0 || x == 9) && (y == 0 || y == 9))
+                    view = new ImageView(ImageHandler.corner);
+                else if (x == 0 || x == 9)
+                    view = new ImageView(ImageHandler.n2);
+                else if (y == 0 || y == 9)
+                    view = new ImageView(ImageHandler.b);
+                else if ((x + y) % 2 == 1)
+                    view = new ImageView(ImageHandler.black);
+                else
+                    view = new ImageView(ImageHandler.white);
+                view.fitWidthProperty().bind(gridWidth);
+                view.fitHeightProperty().bind(gridHeight);
+                stack.getChildren().add(view);
                 board.add(stack, x, y);
+                boardPanes[x][y] = stack;
             }
         }
     }
