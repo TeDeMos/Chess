@@ -42,8 +42,8 @@ public class ChessController {
     private Game game;
     private int xStart;
     private int yStart;
-    private int xMouseStart;
-    private int yMouseStart;
+    private int xBoardStart;
+    private int yBoardStart;
     private boolean moving;
     ReadOnlyDoubleProperty width;
     ReadOnlyDoubleProperty height;
@@ -71,54 +71,35 @@ public class ChessController {
         Point2D coords = getBoardCoords(event);
         if (coords == null)
             return;
-        int x = (int) coords.getX();
-        int y = (int) coords.getY();
-        Bounds chosen = boardPanes[x + 1][y + 1].localToScene(boardPanes[x + 1][y + 1].getBoundsInLocal());
-        xStart = (int) chosen.getCenterX();
-        yStart = (int) chosen.getCenterY();
-        xMouseStart = (int) event.getSceneX();
-        yMouseStart = (int) event.getSceneY();
+        xBoardStart = (int) coords.getX();
+        yBoardStart = (int) coords.getY();
+        Square square = game.getBoard().getSquare(xBoardStart, yBoardStart);
+        if (!square.isOccupied() || square.getPiece().getColour() != game.whoseMove.getColour())
+            return;
+        floating.setImage(ImageHandler.pieces.get(PieceType.fromPiece(square.getPiece())));
+        floating.setVisible(true);
+        showPiece(null, xBoardStart, yBoardStart);
+        floating.setTranslateX(event.getSceneX() - width.getValue() / 2);
+        floating.setTranslateY(event.getSceneY() - height.getValue() / 2);
         moving = true;
-        floating.setTranslateX(xMouseStart - width.getValue() / 2);
-        floating.setTranslateY(yMouseStart - height.getValue() / 2);
     }
 
     private void onMouseMoved(MouseEvent event) {
         if (!moving)
             return;
-        int xMouse = (int) event.getSceneX();
-        int yMouse = (int) event.getSceneY();
-        floating.setTranslateX(xMouse - width.getValue() / 2);
-        floating.setTranslateY(yMouse - height.getValue() / 2);
-        //        floating.setTranslateX(xStart + xMouse - xMouseStart - width.getValue() / 2);
-        //        floating.setTranslateY(yStart + yMouse - yMouseStart - height.getValue() / 2);
+        floating.setTranslateX(event.getSceneX() - width.getValue() / 2);
+        floating.setTranslateY(event.getSceneY() - height.getValue() / 2);
     }
 
     private void onMouseReleased(MouseEvent event) {
         if (!moving)
             return;
-        int xMouse = (int) event.getSceneX();
-        int yMouse = (int) event.getSceneY();
-        Point2D local = board.sceneToLocal(xMouse, yMouse);
-        int xLocal = (int) local.getX();
-        int yLocal = (int) local.getY();
-        ObservableList<ColumnConstraints> columns = board.getColumnConstraints();
-        int smallLength = (int) columns.get(0).getPrefWidth();
-        int bigLength = (int) columns.get(1).getPrefWidth();
-        if (xLocal < smallLength || xLocal > board.getWidth() - smallLength || yLocal < smallLength ||
-                yLocal > board.getHeight() - smallLength) {
-            floating.setTranslateX(xStart - width.getValue() / 2);
-            floating.setTranslateY(yStart - height.getValue() / 2);
-        } else {
-            int x = (xLocal - smallLength) / bigLength;
-            int y = (yLocal - smallLength) / bigLength;
-            Bounds chosen = boardPanes[x + 1][y + 1].localToScene(boardPanes[x + 1][y + 1].getBoundsInLocal());
-            int xCenter = (int) chosen.getCenterX();
-            int yCenter = (int) chosen.getCenterY();
-            floating.setTranslateX(xCenter - width.getValue() / 2);
-            floating.setTranslateY(yCenter - height.getValue() / 2);
-        }
+        Point2D coords = getBoardCoords(event);
+        if (coords != null)
+            game.makeTurn(xBoardStart, yBoardStart, (int) coords.getX(), (int) coords.getY());
+        floating.setVisible(false);
         moving = false;
+        showBoard(game.getBoard());
     }
 
     private Point2D getBoardCoords(MouseEvent event) {
@@ -207,10 +188,10 @@ public class ChessController {
                 boardPanes[x][y] = stack;
             }
         }
-        floating.setImage(ImageHandler.pieces.get(PieceType.PAWN_WHITE));
+        floating.setVisible(false);
         floating.fitWidthProperty().bind(gridSide);
         floating.fitHeightProperty().bind(gridSide);
         game = new Game("Gracz a", "Gracz b", LocalDate.now());
-        showBoard(new Board(""));
+        showBoard(game.getBoard());
     }
 }
