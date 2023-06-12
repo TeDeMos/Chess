@@ -10,8 +10,6 @@ public class ImageHandler {
     public static Image[] numbers;
     public static Image black;
     public static Image white;
-    public static Image pawnWhite;
-    public static Image pawnBlack;
     public static EnumMap<PieceType, Image> pieces;
 
     public static void init() {
