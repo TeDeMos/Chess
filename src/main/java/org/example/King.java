@@ -390,13 +390,13 @@ public class King extends Piece {
         Board helpingBoard = getBoard().cloneBoard();
         Piece helpingKing = helpingBoard.findPiece(new King(this.getColour(), new Square()));
         helpingBoard.getSquare(getPosition().getX(), getPosition().getY()).setPiece(null);
-        getBoard().getSquare(2, line).setPiece(helpingKing);
-        helpingKing.setPosition(getBoard().getSquare(2, line));
+        helpingBoard.getSquare(2, line).setPiece(helpingKing);
+        helpingKing.setPosition(helpingBoard.getSquare(2, line));
         if (((King) helpingKing).hasBeenChecked())
             return false;
         helpingBoard.getSquare(2, line).setPiece(null);
-        getBoard().getSquare(3, line).setPiece(helpingKing);
-        helpingKing.setPosition(getBoard().getSquare(3, line));
+        helpingBoard.getSquare(3, line).setPiece(helpingKing);
+        helpingKing.setPosition(helpingBoard.getSquare(3, line));
         if (((King) helpingKing).hasBeenChecked())
             return false;
         return true;
@@ -421,13 +421,13 @@ public class King extends Piece {
         Board helpingBoard = getBoard().cloneBoard();
         Piece helpingKing = helpingBoard.findPiece(new King(this.getColour(), new Square()));
         helpingBoard.getSquare(getPosition().getX(), getPosition().getY()).setPiece(null);
-        getBoard().getSquare(6, line).setPiece(helpingKing);
-        helpingKing.setPosition(getBoard().getSquare(6, line));
+        helpingBoard.getSquare(6, line).setPiece(helpingKing);
+        helpingKing.setPosition(helpingBoard.getSquare(6, line));
         if (((King) helpingKing).hasBeenChecked())
             return false;
         helpingBoard.getSquare(6, line).setPiece(null);
-        getBoard().getSquare(5, line).setPiece(helpingKing);
-        helpingKing.setPosition(getBoard().getSquare(5, line));
+        helpingBoard.getSquare(5, line).setPiece(helpingKing);
+        helpingKing.setPosition(helpingBoard.getSquare(5, line));
         if (((King) helpingKing).hasBeenChecked())
             return false;
         return true;
