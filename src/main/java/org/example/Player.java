@@ -73,6 +73,11 @@ public class Player {
     public void setPlayer(String s) {
         name = s;
     }
+
+    public String getName() {
+        return name;
+    }
+
     public ArrayList<Piece> getPiecesCaptured() {
         return piecesCaptured;
     }

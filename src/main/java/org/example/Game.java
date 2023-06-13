@@ -191,7 +191,9 @@ public class Game {
             return false;
         }
         if (possibleMoves.contains(board.board[x2][y2])) {
-            board.movePiece(board.board[x1][y1].getPiece(), x2, y2);
+            Piece captured = board.movePiece(board.board[x1][y1].getPiece(), x2, y2);
+            if (captured != null)
+                whoseMove.getPiecesCaptured().add(captured);
             if (whoseMove == player1) {
                 whoseMove = player2;
             } else {

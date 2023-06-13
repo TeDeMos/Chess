@@ -2,12 +2,18 @@
 
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.Label?>
 <StackPane fx:id="pane" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.chesss.ChessController">
-      <HBox fx:id="main" >
+      <HBox fx:id="main">
             <VBox fx:id="left">
-                  <HBox fx:id="topPlayer"/>
+                  <HBox fx:id="topPlayer">
+                        <Label fx:id="topPlayerName"/>
+                  </HBox>
                   <GridPane fx:id="board" hgap="-1" vgap="-1"/>
-                  <HBox fx:id="bottomPlayer"/>
+                  <HBox fx:id="bottomPlayer">
+                        <Label fx:id="bottomPlayerName"/>
+                  </HBox>
             </VBox>
             <VBox fx:id="right"/>
       </HBox>
