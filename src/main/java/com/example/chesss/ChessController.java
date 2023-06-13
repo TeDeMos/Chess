@@ -38,6 +38,8 @@ public class ChessController {
     public ImageView floating;
     public Label topPlayerName;
     public Label bottomPlayerName;
+    public GridPane topPlayerTaken;
+    public GridPane bottomPlayerTaken;
     private StackPane[][] boardPanes;
     private ImageView[] topTakenDisplay;
     private ImageView[] bottomTakenDisplay;
@@ -76,8 +78,14 @@ public class ChessController {
             player1 = player2;
             player2 = temp;
         }
-        topPlayerName.setText(player1.getName());
-        bottomPlayerName.setText(player2.getName());
+        String topName = player1.getName();
+        String bottomName = player2.getName();
+        if (topName.length() > 10)
+            topName = topName.substring(0, 10);
+        if (bottomName.length() > 10)
+            bottomName = bottomName.substring(0, 10);
+        topPlayerName.setText(topName);
+        bottomPlayerName.setText(bottomName);
         ArrayList<Piece> top = player1.getPiecesCaptured();
         ArrayList<Piece> bottom = player2.getPiecesCaptured();
         for (int i = 0; i < top.size(); i++)
@@ -211,25 +219,33 @@ public class ChessController {
                 boardPanes[x][y] = stack;
             }
         }
-        NumberBinding viewSide = leftWidth.divide(32);
+        NumberBinding viewSide = leftWidth.divide(16);
+        topPlayerTaken.prefWidthProperty().bind(leftWidth.divide(2));
+        bottomPlayerTaken.prefWidthProperty().bind(leftWidth.divide(2));
+        for (int i = 0; i < 8; i++) {
+            ColumnConstraints c = new ColumnConstraints();
+            c.prefWidthProperty().bind(viewSide);
+            RowConstraints r = new RowConstraints();
+            r.prefHeightProperty().bind(viewSide);
+        }
         topTakenDisplay = new ImageView[16];
         bottomTakenDisplay = new ImageView[16];
-        for (int i = 15; i >= 0; i--) {
+        for (int i = 0; i < 16; i++) {
             ImageView top = new ImageView();
             top.fitHeightProperty().bind(viewSide);
             top.fitWidthProperty().bind(viewSide);
             ImageView bottom = new ImageView();
             bottom.fitHeightProperty().bind(viewSide);
             bottom.fitWidthProperty().bind(viewSide);
-            topPlayer.getChildren().add(top);
-            bottomPlayer.getChildren().add(bottom);
+            topPlayerTaken.add(top, 7 - i % 8, i / 8);
+            bottomPlayerTaken.add(bottom, 7 - i % 8, i / 8);
             topTakenDisplay[i] = top;
             bottomTakenDisplay[i] = bottom;
         }
         floating.setVisible(false);
         floating.fitWidthProperty().bind(gridSide);
         floating.fitHeightProperty().bind(gridSide);
-        game = new Game("Gracz a", "Gracz b", LocalDate.now());
+        game = new Game("WWWWWWWWWWWW", "WWWWWWWWWWWW", LocalDate.now());
         showBoard(game.getBoard());
         showPlayers(game);
     }

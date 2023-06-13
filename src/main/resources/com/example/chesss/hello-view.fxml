@@ -9,10 +9,12 @@
             <VBox fx:id="left">
                   <HBox fx:id="topPlayer">
                         <Label fx:id="topPlayerName"/>
+                        <GridPane fx:id="topPlayerTaken"/>
                   </HBox>
                   <GridPane fx:id="board" hgap="-1" vgap="-1"/>
                   <HBox fx:id="bottomPlayer">
                         <Label fx:id="bottomPlayerName"/>
+                        <GridPane fx:id="bottomPlayerTaken"/>
                   </HBox>
             </VBox>
             <VBox fx:id="right"/>
