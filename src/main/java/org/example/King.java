@@ -376,9 +376,9 @@ public class King extends Piece {
     public boolean canLongCastle() {
         //is rook ok?
         if (!getBoard().getSquare(0, line).isOccupied()
-                || !(getBoard().getSquare(0, line).getPiece() instanceof Rook
+                || !(getBoard().getSquare(0, line).getPiece() instanceof Rook)
                 || getBoard().getSquare(0, line).getPiece().getColour() != getColour()
-                || ((Rook) getBoard().getSquare(0, line).getPiece()).hasMoved))
+                || ((Rook) getBoard().getSquare(0, line).getPiece()).hasMoved)
             return false;
         //has moved and is checked
         if (hasBeenChecked() || hasMoved) return false;
@@ -408,9 +408,9 @@ public class King extends Piece {
     public boolean canShortCastle() {
         //is rook ok?
         if (!getBoard().getSquare(7, line).isOccupied()
-                || !(getBoard().getSquare(7, line).getPiece() instanceof Rook
+                || !(getBoard().getSquare(7, line).getPiece() instanceof Rook)
                 || getBoard().getSquare(7, line).getPiece().getColour() != getColour()
-                || ((Rook) getBoard().getSquare(7, line).getPiece()).hasMoved))
+                || ((Rook) getBoard().getSquare(7, line).getPiece()).hasMoved)
             return false;
         //has moved and is checked
         if (hasBeenChecked() || hasMoved) return false;
