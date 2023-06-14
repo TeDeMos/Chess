@@ -7,29 +7,25 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.*;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
-import javafx.stage.Stage;
-
-import javax.swing.text.Element;
-
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import org.example.*;
 
-import java.time.LocalDate;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.Random;
 
 public class ChessController {
     @FXML
@@ -52,6 +48,7 @@ public class ChessController {
     public Button resign;
     public Button draw;
     public Button save;
+    private Scene scene;
     public ListView<String> moves;
     private StackPane[][] boardPanes;
     private ImageView[] topTakenDisplay;
@@ -61,9 +58,22 @@ public class ChessController {
     private int xBoardStart;
     private int yBoardStart;
     private boolean moving;
+    private Mode mode;
 
     ReadOnlyDoubleProperty width;
     ReadOnlyDoubleProperty height;
+
+    public void setGame(Game g, Mode m) {
+        game = g;
+        mode = m;
+        showBoard(game.getBoard());
+        showPlayers(game);
+        showTimer(game);
+    }
+
+    public void setMoves(String[] stringMoves) {
+        moves.getItems().addAll(stringMoves);
+    }
 
     private void showPiece(PieceType piece, int x, int y) {
         for (PieceType p : PieceType.values())
@@ -155,12 +165,14 @@ public class ChessController {
         if (coords != null) {
             Piece start = game.getBoard().getSquare(xBoardStart, 7 - yBoardStart).getPiece();
             if (game.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY())) {
+                String color = start.getColour().displayName();
                 String[] split = start.getClass().getName().split("\\.");
                 String name = split[split.length - 1];
                 char letterStart = (char) ('A' + xBoardStart);
                 char letterEnd = (char) ('A' + (int) coords.getX());
-                moves.getItems().add(0, String.format("%s: %c%d -> %c%d", name, letterStart, 8 - yBoardStart, letterEnd,
-                        8 - (int) coords.getY()));
+                moves.getItems().add(0,
+                        String.format("%s %s %c%d -> %c%d", color, name, letterStart, 8 - yBoardStart, letterEnd,
+                                8 - (int) coords.getY()));
             }
         }
         floating.setVisible(false);
@@ -173,10 +185,45 @@ public class ChessController {
     public void resign(ActionEvent event) {
     }
 
-    public void draw(ActionEvent actionEvent) {
+    public void draw(ActionEvent event) {
     }
 
-    public void save(ActionEvent actionEvent) {
+    public void save(ActionEvent event) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save game file");
+        chooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files (*.txt)", "*.txt"));
+        File file = chooser.showSaveDialog(scene.getWindow());
+        if (file != null) {
+            try {
+                Files.writeString(file.toPath(), createFile());
+                return;
+            } catch (IOException ignored) {
+            }
+        }
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Saving failed");
+        alert.setContentText("Chosen file was incorrect");
+        alert.showAndWait();
+    }
+
+    private String createFile() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(mode).append(';').append(game.player1.getName()).append(';').append(game.player2.getName())
+                .append(';');
+        for (int i = 0; i < game.getMoves().size(); i++) {
+            if (i != 0)
+                builder.append(':');
+            builder.append(game.getMoves().get(i));
+        }
+        builder.append(';');
+        for (int i = 0; i < moves.getItems().size(); i++) {
+            if (i != 0)
+                builder.append(':');
+            builder.append(moves.getItems().get(i));
+        }
+        return builder.toString();
     }
 
     private Point2D getBoardCoords(MouseEvent event) {
@@ -197,6 +244,7 @@ public class ChessController {
     }
 
     public void prepare(Scene scene) {
+        this.scene = scene;
         width = scene.widthProperty();
         height = scene.heightProperty();
         NumberBinding unit = Bindings.min(width.divide(11), height.divide(9));
@@ -319,9 +367,5 @@ public class ChessController {
         floating.setVisible(false);
         floating.fitWidthProperty().bind(gridSide);
         floating.fitHeightProperty().bind(gridSide);
-        game = new Game("Maksymilian", "Tymoteusz", LocalDate.now());
-        showBoard(game.getBoard());
-        showPlayers(game);
-        showTimer(game);
     }
 }

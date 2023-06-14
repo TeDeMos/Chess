@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.chesss.MenuController" fx:id="main"
+      alignment="CENTER">
+    <Label fx:id="title" alignment="CENTER">Chess</Label>
+    <Button fx:id="newSingle" onAction="#newSingle">Start Singleplayer</Button>
+    <Button fx:id="loadSingle" onAction="#loadSingle">Load Singleplayer</Button>
+    <Button fx:id="newMulti" onAction="#newMulti">Start Multiplayer</Button>
+    <Button fx:id="loadMulti" onAction="#loadMulti">Load Multiplayer</Button>
+    <Button fx:id="joinMulti" onAction="#joinMulti">Join Multiplayer</Button>
+</VBox>

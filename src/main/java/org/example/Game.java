@@ -1,6 +1,7 @@
 package org.example;
 
-
+import com.example.chesss.Mode;
+import com.example.chesss.Move;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,11 @@ import java.util.Objects;
  * it permits to make a turn in a way according to the chess rules
  */
 public class Game {
+    private ArrayList<Move> moves;
+
+    public ArrayList<Move> getMoves() {
+            return moves;
+    }
 
     /**
      * Default constructor
@@ -29,16 +35,20 @@ public class Game {
         player2 = new Player(Colour.BLACK, name2);
         whoseMove = player1;
         gameTime = date;
+        moves = new ArrayList<>();
         setup();
     }
+
     public Game(String name1, String name2, LocalDate date, Board board) {
         this.board = board.cloneBoard();
         player1 = new Player(Colour.WHITE, name1);
         player2 = new Player(Colour.BLACK, name2);
         whoseMove = player1;
         gameTime = date;
+        moves = new ArrayList<>();
         setup();
     }
+
     /**
      * The board that the game is played on
      * Initially with standard arrangement od pieces
@@ -157,13 +167,15 @@ public class Game {
     public boolean isPromotion() {
         if (whoseMove == player1) {
             for (int i = 0; i < 8; i++) {
-                if (board.getSquare(i, 7).getPiece().getColour() == Colour.WHITE && board.getSquare(i, 7).getPiece().getValue() == 1) {
+                if (board.getSquare(i, 7).getPiece().getColour() == Colour.WHITE &&
+                        board.getSquare(i, 7).getPiece().getValue() == 1) {
                     return true;
                 }
             }
         } else {
             for (int i = 0; i < 8; i++) {
-                if (board.getSquare(i, 0).getPiece().getColour() == Colour.BLACK && board.getSquare(i, 0).getPiece().getValue() == 1) {
+                if (board.getSquare(i, 0).getPiece().getColour() == Colour.BLACK &&
+                        board.getSquare(i, 0).getPiece().getValue() == 1) {
                     return true;
                 }
             }
@@ -199,6 +211,7 @@ public class Game {
             } else {
                 whoseMove = player1;
             }
+            moves.add(new Move(x1, y1, x2, y2));
             return true;
         } else {
             return false;
@@ -233,78 +246,114 @@ public class Game {
                 switch (pieceCName[1]) {
                     case "Pawn":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Pawn(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Pawn(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Pawn(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Pawn(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         }
                         break;
                     case "Bishop":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Bishop(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Bishop(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Bishop(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Bishop(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         }
                         break;
                     case "King":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new King(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new King(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new King(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new King(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         }
                         break;
                     case "Knight":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Knight(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Knight(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Knight(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Knight(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         }
                         break;
                     case "Queen":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Queen(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Queen(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Queen(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Queen(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         }
                         break;
                     case "Rook":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Rook(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Rook(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Rook(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Rook(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
                         }
                         break;
                     case "RookM":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Rook(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
-                            ((Rook) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].getPiece())).hasMoved = true;
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Rook(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
+                            ((Rook) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].getPiece())).hasMoved = true;
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new Rook(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
-                            ((Rook) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].getPiece())).hasMoved = true;
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new Rook(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
+                            ((Rook) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].getPiece())).hasMoved = true;
                         }
                         break;
                     case "KingM":
                         if (Objects.equals(pieceCName[0], "White")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new King(Colour.WHITE, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
-                            ((King) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].getPiece())).hasMoved = true;
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new King(Colour.WHITE,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
+                            ((King) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].getPiece())).hasMoved = true;
                         } else if (Objects.equals(pieceCName[0], "Black")) {
-                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].
-                                    setPiece(new King(Colour.BLACK, new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), loadedBoardState)));
-                            ((King) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(coordinates[1])].getPiece())).hasMoved = true;
+                            loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].setPiece(new King(Colour.BLACK,
+                                    new Square(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]),
+                                            loadedBoardState)));
+                            ((King) (loadedBoardState.board[Integer.parseInt(coordinates[0])][Integer.parseInt(
+                                    coordinates[1])].getPiece())).hasMoved = true;
                         }
                         break;
                     case "last":
@@ -317,12 +366,11 @@ public class Game {
                         }
                         break;
                     case "Host":
-                        if(Objects.equals(pieceCName[0], "White")){
+                        if (Objects.equals(pieceCName[0], "White")) {
                             hostColor = Colour.WHITE;
-                        }else{
+                        } else {
                             hostColor = Colour.BLACK;
                         }
-
                 }
             }
         } catch (IOException e) {
@@ -331,6 +379,7 @@ public class Game {
         //board = loadedBoardState;
         return loadedBoardState;
     }
+
     public Player loadPlayer(String filename) {
         File file = new File(filename);
         Board loadedBoardState = new Board("empty");
@@ -415,7 +464,6 @@ public class Game {
         }
         if (whoseMove == player1) {
             boardState.put("X;X", "player1 last");
-
         } else {
             boardState.put("X;X", "player2 last");
         }
@@ -425,7 +473,6 @@ public class Game {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -438,7 +485,6 @@ public class Game {
             return ((King) board.findPiece(new King(Colour.BLACK, new Square()))).hasBeenChecked();
         }
     }
-
 
     /**
      * @return Board with its actual state
@@ -464,5 +510,4 @@ public class Game {
     public void endGame() {
         // TODO implement here
     }
-
 }
