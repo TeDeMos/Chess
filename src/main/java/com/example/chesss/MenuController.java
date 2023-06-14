@@ -6,23 +6,20 @@ import javafx.beans.binding.StringExpression;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.example.ChessServer;
 import org.example.Colour;
 import org.example.Game;
-import org.example.Player;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.Optional;
 
 public class MenuController {
@@ -55,7 +52,7 @@ public class MenuController {
         Game game = new Game(whiteName.getText(), blackName.getText(), LocalDate.now());
         Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
         window.setScene(scene);
-        controller.setGame(game, Mode.LOCAL);
+        controller.startLocal(game);
     }
 
     public void loadSingle(ActionEvent event) {
@@ -84,8 +81,7 @@ public class MenuController {
             String[] stringMoves = split[4].split(":");
             Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
             window.setScene(scene);
-            controller.setGame(game, Mode.LOCAL);
-            controller.setMoves(stringMoves);
+            controller.startLocalMoves(game, stringMoves);
             return;
         }
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -95,7 +91,7 @@ public class MenuController {
         alert.showAndWait();
     }
 
-    public void newMulti(ActionEvent event) {
+    public void newMulti(ActionEvent event) throws InterruptedException {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("New Multiplayer Game");
         dialog.setHeaderText("Set name and color");
@@ -114,18 +110,57 @@ public class MenuController {
         if (result.isEmpty() || result.get() == ButtonType.CANCEL)
             return;
         String hostName = name.getText();
-        String hostColour = colour.getSelectionModel().getSelectedItem();
-        ChessServer server = new ChessServer();
-        Game game = new Game(whiteName.getText(), blackName.getText(), LocalDate.now());
+        Colour hostColour = Colour.valueOf(colour.getSelectionModel().getSelectedItem().toUpperCase());
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Waiting");
+        alert.setHeaderText("Client joined");
+        alert.setContentText("You can close this window");
+        alert.show();
+        Server server = new Server(hostName, hostColour, controller);
+        Game game;
+        if (hostColour == Colour.WHITE)
+            game = new Game(hostName, server.clientName, LocalDate.now());
+        else
+            game = new Game(server.clientName, hostName, LocalDate.now());
         Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
         window.setScene(scene);
-        controller.setGame(game, Mode.LOCAL);
+        controller.startHost(server, game, hostColour);
     }
 
     public void loadMulti(ActionEvent event) {
     }
 
     public void joinMulti(ActionEvent event) {
+        Client client = new Client();
+        if (client.firstMessage.startsWith("name")) {
+            String[] split = client.firstMessage.split(";");
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("Join multiplayer game");
+            String headerMessage = "Set name (you're %s)".formatted(split[1]);
+            dialog.setHeaderText(headerMessage);
+            GridPane content = new GridPane();
+            content.add(new Label("Name: "), 0, 0);
+            TextField name = new TextField();
+            content.add(name, 1, 0);
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+            Optional<ButtonType> result = dialog.showAndWait();
+            if (result.isEmpty() || result.get() == ButtonType.CANCEL)
+                return;
+            Game game;
+            if (split[1].equals("white"))
+                game = new Game(name.getText(), split[2], LocalDate.now());
+            else
+                game = new Game(split[2], name.getText(), LocalDate.now());
+            try {
+                client.send(name.getText());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            window.setScene(scene);
+            Colour clientColour = split[1].equals("white") ? Colour.WHITE : Colour.BLACK;
+            controller.startClient(client, game, clientColour);
+        }
     }
 
     public void prepare(Scene s) throws IOException {

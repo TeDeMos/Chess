@@ -1,5 +1,6 @@
 package com.example.chesss;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.binding.StringExpression;
@@ -59,20 +60,53 @@ public class ChessController {
     private int yBoardStart;
     private boolean moving;
     private Mode mode;
+    private Colour colour;
+    private Server server;
+    private Client client;
+    private boolean flipped;
 
     ReadOnlyDoubleProperty width;
     ReadOnlyDoubleProperty height;
 
-    public void setGame(Game g, Mode m) {
-        game = g;
-        mode = m;
+    public void startLocal(Game game) {
+        this.game = game;
+        flipped = false;
+        mode = Mode.LOCAL;
+        refresh();
+    }
+
+    public void startLocalMoves(Game game, String[] moves) {
+        this.game = game;
+        this.moves.getItems().addAll(moves);
+        flipped = false;
+        mode = Mode.LOCAL;
+        refresh();
+    }
+
+    public void startHost(Server server, Game game, Colour colour) {
+        this.server = server;
+        this.game = game;
+        this.colour = colour;
+        this.flipped = colour == Colour.BLACK;
+        mode = Mode.HOST;
+        refresh();
+        server.start();
+    }
+
+    public void startClient(Client client, Game game, Colour colour) {
+        this.client = client;
+        this.game = game;
+        this.colour = colour;
+        this.flipped = colour == Colour.BLACK;
+        mode = Mode.GUEST;
+        refresh();
+        client.start(this, game);
+    }
+
+    public void refresh() {
         showBoard(game.getBoard());
         showPlayers(game);
         showTimer(game);
-    }
-
-    public void setMoves(String[] stringMoves) {
-        moves.getItems().addAll(stringMoves);
     }
 
     private void showPiece(PieceType piece, int x, int y) {
@@ -135,6 +169,8 @@ public class ChessController {
     }
 
     public void onMousePressed(MouseEvent event) {
+        if (mode == null || mode != Mode.LOCAL && colour != game.whoseMove.getColour())
+            return;
         Point2D coords = getBoardCoords(event);
         if (coords == null)
             return;
@@ -165,6 +201,10 @@ public class ChessController {
         if (coords != null) {
             Piece start = game.getBoard().getSquare(xBoardStart, 7 - yBoardStart).getPiece();
             if (game.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY())) {
+                if (mode == Mode.HOST)
+                    server.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY());
+                if (mode == Mode.GUEST)
+                    client.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY());
                 String color = start.getColour().displayName();
                 String[] split = start.getClass().getName().split("\\.");
                 String name = split[split.length - 1];
@@ -182,13 +222,29 @@ public class ChessController {
         showTimer(game);
     }
 
+    public synchronized void moveOpponent(int x0, int y0, int x1, int y1) {
+        Piece start = game.getBoard().getSquare(x0, y0).getPiece();
+        if (game.makeTurn(x0, y0, x1, y1)) {
+            String color = start.getColour().displayName();
+            String[] split = start.getClass().getName().split("\\.");
+            String name = split[split.length - 1];
+            char letterStart = (char) ('A' + x0);
+            char letterEnd = (char) ('A' + x1);
+            moves.getItems().add(0,
+                    String.format("%s %s %c%d -> %c%d", color, name, letterStart, y0 + 1, letterEnd, y1 + 1));
+        }
+//        Platform.runLater(this::refresh);
+        refresh();
+        moves.refresh();
+    }
+
     public void resign(ActionEvent event) {
     }
 
     public void draw(ActionEvent event) {
     }
 
-    public void save(ActionEvent event) {
+    public void save(ActionEvent ignoredEvent) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Save game file");
         chooser.setInitialDirectory(new File(System.getProperty("user.home")));
@@ -312,6 +368,7 @@ public class ChessController {
                         ImageView v = new ImageView(ImageHandler.pieces.get(piece));
                         v.fitWidthProperty().bind(gridWidth);
                         v.fitHeightProperty().bind(gridHeight);
+                        v.setVisible(false);
                         stack.getChildren().add(v);
                         piecesViews[x - 1][y - 1].put(piece, v);
                     }
