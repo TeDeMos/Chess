@@ -2,17 +2,22 @@ package com.example.chesss;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
+import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -40,6 +45,14 @@ public class ChessController {
     public Label bottomPlayerName;
     public GridPane topPlayerTaken;
     public GridPane bottomPlayerTaken;
+    public Label whiteClock;
+    public Label blackClock;
+    public Pane whiteClockBackground;
+    public Pane blackClockBackground;
+    public Button resign;
+    public Button draw;
+    public Button save;
+    public ListView<String> moves;
     private StackPane[][] boardPanes;
     private ImageView[] topTakenDisplay;
     private ImageView[] bottomTakenDisplay;
@@ -48,6 +61,7 @@ public class ChessController {
     private int xBoardStart;
     private int yBoardStart;
     private boolean moving;
+
     ReadOnlyDoubleProperty width;
     ReadOnlyDoubleProperty height;
 
@@ -78,20 +92,36 @@ public class ChessController {
             player1 = player2;
             player2 = temp;
         }
-        String topName = player1.getName();
-        String bottomName = player2.getName();
-        if (topName.length() > 10)
-            topName = topName.substring(0, 10);
-        if (bottomName.length() > 10)
-            bottomName = bottomName.substring(0, 10);
-        topPlayerName.setText(topName);
-        bottomPlayerName.setText(bottomName);
+        topPlayerName.setText(player1.getName());
+        bottomPlayerName.setText(player2.getName());
         ArrayList<Piece> top = player1.getPiecesCaptured();
         ArrayList<Piece> bottom = player2.getPiecesCaptured();
         for (int i = 0; i < top.size(); i++)
             topTakenDisplay[i].setImage(ImageHandler.pieces.get(PieceType.fromPiece(top.get(i))));
         for (int i = 0; i < bottom.size(); i++)
             bottomTakenDisplay[i].setImage(ImageHandler.pieces.get(PieceType.fromPiece(bottom.get(i))));
+    }
+
+    public void showTimer(Game game) {
+        Pane activeBackground, inactiveBackground;
+        Label activeLabel, inactiveLabel;
+        if (game.whoseMove.getColour() == Colour.BLACK) {
+            activeBackground = whiteClockBackground;
+            inactiveBackground = blackClockBackground;
+            activeLabel = whiteClock;
+            inactiveLabel = blackClock;
+        } else {
+            activeBackground = blackClockBackground;
+            inactiveBackground = whiteClockBackground;
+            activeLabel = blackClock;
+            inactiveLabel = whiteClock;
+        }
+        inactiveBackground.setBackground(Background.fill(Color.DARKGRAY));
+        inactiveBackground.setBorder(Border.stroke(Color.GRAY));
+        inactiveLabel.setTextFill(Color.GRAY);
+        activeBackground.setBackground(Background.fill(Color.WHITE));
+        activeBackground.setBorder(Border.stroke(Color.DARKGRAY));
+        activeLabel.setTextFill(Color.BLACK);
     }
 
     public void onMousePressed(MouseEvent event) {
@@ -111,23 +141,42 @@ public class ChessController {
         moving = true;
     }
 
-    private void onMouseMoved(MouseEvent event) {
+    public void onMouseMoved(MouseEvent event) {
         if (!moving)
             return;
         floating.setTranslateX(event.getSceneX() - width.getValue() / 2);
         floating.setTranslateY(event.getSceneY() - height.getValue() / 2);
     }
 
-    private void onMouseReleased(MouseEvent event) {
+    public void onMouseReleased(MouseEvent event) {
         if (!moving)
             return;
         Point2D coords = getBoardCoords(event);
-        if (coords != null)
-            game.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY());
+        if (coords != null) {
+            Piece start = game.getBoard().getSquare(xBoardStart, 7 - yBoardStart).getPiece();
+            if (game.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY())) {
+                String[] split = start.getClass().getName().split("\\.");
+                String name = split[split.length - 1];
+                char letterStart = (char) ('A' + xBoardStart);
+                char letterEnd = (char) ('A' + (int) coords.getX());
+                moves.getItems().add(0, String.format("%s: %c%d -> %c%d", name, letterStart, 8 - yBoardStart, letterEnd,
+                        8 - (int) coords.getY()));
+            }
+        }
         floating.setVisible(false);
         moving = false;
         showBoard(game.getBoard());
         showPlayers(game);
+        showTimer(game);
+    }
+
+    public void resign(ActionEvent event) {
+    }
+
+    public void draw(ActionEvent actionEvent) {
+    }
+
+    public void save(ActionEvent actionEvent) {
     }
 
     private Point2D getBoardCoords(MouseEvent event) {
@@ -148,9 +197,6 @@ public class ChessController {
     }
 
     public void prepare(Scene scene) {
-        scene.setOnMousePressed(this::onMousePressed);
-        scene.setOnMouseDragged(this::onMouseMoved);
-        scene.setOnMouseReleased(this::onMouseReleased);
         width = scene.widthProperty();
         height = scene.heightProperty();
         NumberBinding unit = Bindings.min(width.divide(11), height.divide(9));
@@ -162,12 +208,16 @@ public class ChessController {
         NumberBinding rightWidth = mainWidth.multiply(4d / 11);
         left.prefWidthProperty().bind(leftWidth);
         right.prefWidthProperty().bind(rightWidth);
+        right.maxHeightProperty().bind(mainHeight);
         NumberBinding playerInfoHeight = mainHeight.divide(9);
         NumberBinding boardHeight = mainHeight.multiply(7d / 9);
         topPlayerName.prefHeightProperty().bind(playerInfoHeight);
         topPlayerName.prefWidthProperty().bind(leftWidth.divide(2));
         bottomPlayerName.prefHeightProperty().bind(playerInfoHeight);
         bottomPlayerName.prefWidthProperty().bind(leftWidth.divide(2));
+        StringExpression labelFontSize = Bindings.concat("-fx-font-size: ", playerInfoHeight.divide(2), ";");
+        topPlayerName.styleProperty().bind(labelFontSize);
+        bottomPlayerName.styleProperty().bind(labelFontSize);
         board.prefHeightProperty().bind(boardHeight);
         bottomPlayer.prefHeightProperty().bind(playerInfoHeight);
         NumberBinding gridSide = boardHeight.divide(9);
@@ -175,16 +225,19 @@ public class ChessController {
         boardPanes = new StackPane[10][10];
         //noinspection unchecked
         piecesViews = (EnumMap<PieceType, ImageView>[][]) new EnumMap[8][8];
+        for (int i = 0; i < 10; i++) {
+            NumberBinding gridSquare = i == 0 || i == 9 ? gridSide.divide(2) : gridSide;
+            ColumnConstraints c = new ColumnConstraints();
+            c.prefWidthProperty().bind(gridSquare);
+            board.getColumnConstraints().add(c);
+            RowConstraints r = new RowConstraints();
+            r.prefHeightProperty().bind(gridSquare);
+            board.getRowConstraints().add(r);
+        }
         for (int x = 0; x < 10; x++) {
             NumberBinding gridWidth = x == 0 || x == 9 ? gridSide.divide(2) : gridSide;
-            ColumnConstraints c = new ColumnConstraints();
-            c.prefWidthProperty().bind(gridWidth);
-            board.getColumnConstraints().add(c);
             for (int y = 0; y < 10; y++) {
                 NumberBinding gridHeight = y == 0 || y == 9 ? gridSide.divide(2) : gridSide;
-                RowConstraints r = new RowConstraints();
-                r.prefHeightProperty().bind(gridHeight);
-                board.getRowConstraints().add(r);
                 StackPane stack = new StackPane();
                 ImageView view;
                 boolean regular = false;
@@ -242,11 +295,33 @@ public class ChessController {
             topTakenDisplay[i] = top;
             bottomTakenDisplay[i] = bottom;
         }
+        right.spacingProperty().bind(unit.divide(5));
+        right.paddingProperty()
+                .bind(Bindings.createObjectBinding(() -> new Insets(unit.divide(5).doubleValue()), unit));
+        NumberBinding childWidth = rightWidth.subtract(unit.multiply(0.4));
+        whiteClockBackground.prefHeightProperty().bind(unit);
+        blackClockBackground.prefHeightProperty().bind(unit);
+        whiteClock.styleProperty().bind(labelFontSize);
+        whiteClock.setText("60:00");
+        blackClock.styleProperty().bind(labelFontSize);
+        blackClock.setText("60:00");
+        StringExpression buttonFontSize = Bindings.concat("-fx-font-size: ", unit.divide(4), ";");
+        resign.prefHeightProperty().bind(unit.divide(2));
+        draw.prefHeightProperty().bind(unit.divide(2));
+        save.prefHeightProperty().bind(unit.divide(2));
+        resign.prefWidthProperty().bind(childWidth);
+        draw.prefWidthProperty().bind(childWidth);
+        save.prefWidthProperty().bind(childWidth);
+        resign.styleProperty().bind(buttonFontSize);
+        draw.styleProperty().bind(buttonFontSize);
+        save.styleProperty().bind(buttonFontSize);
+        moves.styleProperty().bind(buttonFontSize);
         floating.setVisible(false);
         floating.fitWidthProperty().bind(gridSide);
         floating.fitHeightProperty().bind(gridSide);
-        game = new Game("WWWWWWWWWWWW", "WWWWWWWWWWWW", LocalDate.now());
+        game = new Game("Maksymilian", "Tymoteusz", LocalDate.now());
         showBoard(game.getBoard());
         showPlayers(game);
+        showTimer(game);
     }
 }

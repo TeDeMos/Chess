@@ -4,20 +4,37 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.Label?>
-<StackPane fx:id="pane" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.chesss.ChessController">
-      <HBox fx:id="main">
-            <VBox fx:id="left">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import java.lang.String?>
+<StackPane fx:id="pane" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.chesss.ChessController"
+onMousePressed="#onMousePressed" onMouseDragged="#onMouseMoved" onMouseReleased="#onMouseReleased"
+style="-fx-background-color: lightgray">
+      <HBox fx:id="main" alignment="CENTER">
+            <VBox fx:id="left" alignment="CENTER">
                   <HBox fx:id="topPlayer">
                         <Label fx:id="topPlayerName"/>
                         <GridPane fx:id="topPlayerTaken"/>
                   </HBox>
-                  <GridPane fx:id="board" hgap="-1" vgap="-1"/>
+                  <GridPane fx:id="board"/>
                   <HBox fx:id="bottomPlayer">
                         <Label fx:id="bottomPlayerName"/>
                         <GridPane fx:id="bottomPlayerTaken"/>
                   </HBox>
             </VBox>
-            <VBox fx:id="right"/>
+            <VBox fx:id="right" alignment="CENTER">
+                  <StackPane fx:id="whiteClockBackground">
+                        <Label fx:id="whiteClock"/>
+                  </StackPane>
+                  <Button fx:id="resign" onAction="#resign">Resign</Button>
+                  <Button fx:id="draw" onAction="#draw">Offer Draw</Button>
+                  <Button fx:id="save" onAction="#save">Save and Quit</Button>
+                  <ListView fx:id="moves" VBox.vgrow="ALWAYS">
+                  </ListView>
+                  <StackPane fx:id="blackClockBackground">
+                        <Label fx:id="blackClock"/>
+                  </StackPane>
+            </VBox>
       </HBox>
       <ImageView fx:id="floating">
 
