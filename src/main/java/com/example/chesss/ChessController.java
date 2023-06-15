@@ -343,7 +343,7 @@ public class ChessController {
     }
 
     public void resign(ActionEvent ignoredEvent) {
-        if (mode == null || colour != game.whoseMove.getColour())
+        if (mode == null || mode == Mode.ONLINE && colour != game.whoseMove.getColour())
             return;
         Colour winner = game.whoseMove.getColour().getInverse();
         if (mode == Mode.ONLINE) {
