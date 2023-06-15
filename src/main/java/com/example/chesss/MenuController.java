@@ -21,18 +21,18 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public class MenuController {
-    public Button loadSingle;
-    public Button newSingle;
-    public Button newMulti;
-    public Button loadMulti;
-    public Button joinMulti;
+    public Button loadLocal;
+    public Button newLocal;
+    public Button newOnline;
+    public Button loadOnline;
+    public Button joinOnline;
     public Label title;
     public VBox main;
     private ChessController controller;
     private Scene scene;
 
-    public void newSingle(ActionEvent event) {
-        String names = newSingleplayerDialog();
+    public void newLocal(ActionEvent event) {
+        String names = newLocalDialog();
         if (names.isEmpty())
             return;
         String[] split = names.split(";");
@@ -42,7 +42,7 @@ public class MenuController {
         controller.startLocal(game);
     }
 
-    public void loadSingle(ActionEvent event) {
+    public void loadLocal(ActionEvent event) {
         String content = showLoadGameDialog();
         Game game = loadGame(content);
         if (game == null) {
@@ -54,8 +54,8 @@ public class MenuController {
         controller.startLocal(game);
     }
 
-    public void newMulti(ActionEvent event) {
-        String nameAndColor = newMultiplayerDialog();
+    public void newOnline(ActionEvent event) {
+        String nameAndColor = newOnlineDialog();
         if (nameAndColor.isEmpty())
             return;
         String[] split = nameAndColor.split(";");
@@ -74,19 +74,19 @@ public class MenuController {
             game = new Game(hostName, server.clientName, LocalDate.now());
         else
             game = new Game(server.clientName, hostName, LocalDate.now());
-        controller.startHost(server, game, hostColour);
+        controller.startOnline(server, game, hostColour);
         Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
         window.setScene(scene);
     }
 
-    public void loadMulti(ActionEvent event) {
+    public void loadOnline(ActionEvent event) {
         String content = showLoadGameDialog();
         Game game = loadGame(content);
         if (game == null) {
             showLoadingError();
             return;
         }
-        Colour hostColour = Colour.valueOf(loadMultiplayerDialog(game.player1.getName(), game.player2.getName()));
+        Colour hostColour = Colour.valueOf(loadOnlineDialog(game.player1.getName(), game.player2.getName()));
         showClientWaitingAlert();
         Server server;
         try {
@@ -97,10 +97,10 @@ public class MenuController {
         }
         Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
         window.setScene(scene);
-        controller.startHost(server, game, hostColour);
+        controller.startOnline(server, game, hostColour);
     }
 
-    public void joinMulti(ActionEvent event) {
+    public void joinOnline(ActionEvent event) {
         Client client;
         try {
             client = new Client(controller);
@@ -116,7 +116,7 @@ public class MenuController {
             else
                 guestColour = Colour.WHITE;
             String hostName = split[2];
-            String guestName = joinMultiplayerDialog(guestColour);
+            String guestName = joinOnlineDialog(guestColour);
             if (guestName.isEmpty())
                 return;
             try {
@@ -132,7 +132,7 @@ public class MenuController {
                 game = new Game(hostName, guestName, LocalDate.now());
             Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
             window.setScene(scene);
-            controller.startClient(client, game, guestColour);
+            controller.startOnline(client, game, guestColour);
         } else {
             Colour guestColour = Colour.valueOf(split[1]);
             if (guestColour == Colour.WHITE)
@@ -144,13 +144,13 @@ public class MenuController {
                     guestColour);
             Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
             window.setScene(scene);
-            controller.startClient(client, game, guestColour);
+            controller.startOnline(client, game, guestColour);
         }
     }
 
-    private String newSingleplayerDialog() {
+    private String newLocalDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("New Singleplayer Game");
+        dialog.setTitle("New Local Game");
         dialog.setHeaderText("Set player names");
         GridPane content = new GridPane();
         content.add(new Label("White player: "), 0, 0);
@@ -164,7 +164,13 @@ public class MenuController {
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isEmpty() || result.get() == ButtonType.CANCEL)
             return "";
-        return "%s;%s".formatted(whiteName.getText(), blackName.getText());
+        String white = whiteName.getText();
+        if (white.isEmpty())
+            white = " ";
+        String black = blackName.getText();
+        if (black.isEmpty())
+            black = " ";
+        return "%s;%s".formatted(white, black);
     }
 
     private String showLoadGameDialog() {
@@ -197,9 +203,9 @@ public class MenuController {
         }
     }
 
-    private String newMultiplayerDialog() {
+    private String newOnlineDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("New Multiplayer Game");
+        dialog.setTitle("New Online Game");
         dialog.setHeaderText("Set name and color");
         GridPane content = new GridPane();
         content.add(new Label("Name: "), 0, 0);
@@ -215,12 +221,15 @@ public class MenuController {
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isEmpty() || result.get() == ButtonType.CANCEL)
             return "";
-        return "%s;%s".formatted(name.getText(), colour.getSelectionModel().getSelectedItem().toUpperCase());
+        String nameResult = name.getText();
+        if (nameResult.isEmpty())
+            nameResult = " ";
+        return "%s;%s".formatted(nameResult, colour.getSelectionModel().getSelectedItem().toUpperCase());
     }
 
-    private String loadMultiplayerDialog(String whiteName, String blackName) {
+    private String loadOnlineDialog(String whiteName, String blackName) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Load Multiplayer Game");
+        dialog.setTitle("Load Online Game");
         dialog.setHeaderText("Which player are you?");
         GridPane content = new GridPane();
         ComboBox<String> player = new ComboBox<>();
@@ -239,9 +248,9 @@ public class MenuController {
         return "BLACK";
     }
 
-    private String joinMultiplayerDialog(Colour guestColour) {
+    private String joinOnlineDialog(Colour guestColour) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Join multiplayer game");
+        dialog.setTitle("Join Online Game");
         String headerMessage = "Set name (you're %s)".formatted(guestColour.displayName());
         dialog.setHeaderText(headerMessage);
         GridPane content = new GridPane();
@@ -253,7 +262,10 @@ public class MenuController {
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isEmpty() || result.get() == ButtonType.CANCEL)
             return "";
-        return name.getText();
+        String nameResult = name.getText();
+        if (nameResult.isEmpty())
+            nameResult = " ";
+        return nameResult;
     }
 
     private void showLoadingError() {
@@ -300,7 +312,7 @@ public class MenuController {
         StringExpression titleFontSize = Bindings.concat("-fx-font-size: ", unit.multiply(2), ";");
         StringExpression buttonFontSize = Bindings.concat("-fx-font-size: ", unit.divide(2), ";");
         title.styleProperty().bind(titleFontSize);
-        Button[] buttons = {newSingle, loadSingle, newMulti, loadMulti, joinMulti};
+        Button[] buttons = {newLocal, loadLocal, newOnline, loadOnline, joinOnline};
         for (Button button : buttons) {
             button.prefWidthProperty().bind(unit.multiply(5));
             button.prefHeightProperty().bind(unit);

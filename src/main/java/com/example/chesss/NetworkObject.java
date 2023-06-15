@@ -39,39 +39,23 @@ public abstract class NetworkObject {
         }
     }
 
-    public void makeTurn(Move move) {
-        try {
-            send("m;%s".formatted(move));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void makeTurn(Move move) throws IOException {
+        send("m;%s".formatted(move));
     }
 
-    public void resign() {
-        try {
-            send("r");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void resign() throws IOException {
+        send("r");
     }
 
-    public void requestDraw() {
-        try {
-            send("d");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void requestDraw() throws IOException {
+        send("d");
     }
 
-    public void respondDraw(boolean response) {
-        try {
-            if (response)
-                send("y");
-            else
-                send("n");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void respondDraw(boolean response) throws IOException {
+        if (response)
+            send("y");
+        else
+            send("n");
     }
 
     protected abstract void send(String message) throws IOException;

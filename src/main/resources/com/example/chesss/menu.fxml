@@ -5,9 +5,9 @@
 <VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.chesss.MenuController" fx:id="main"
       alignment="CENTER">
     <Label fx:id="title" alignment="CENTER">Chess</Label>
-    <Button fx:id="newSingle" onAction="#newSingle">Start Singleplayer</Button>
-    <Button fx:id="loadSingle" onAction="#loadSingle">Load Singleplayer</Button>
-    <Button fx:id="newMulti" onAction="#newMulti">Start Multiplayer</Button>
-    <Button fx:id="loadMulti" onAction="#loadMulti">Load Multiplayer</Button>
-    <Button fx:id="joinMulti" onAction="#joinMulti">Join Multiplayer</Button>
+    <Button fx:id="newLocal" onAction="#newLocal">Start Local</Button>
+    <Button fx:id="loadLocal" onAction="#loadLocal">Load Local</Button>
+    <Button fx:id="newOnline" onAction="#newOnline">Start Online</Button>
+    <Button fx:id="loadOnline" onAction="#loadOnline">Load Online</Button>
+    <Button fx:id="joinOnline" onAction="#joinOnline">Join Online</Button>
 </VBox>

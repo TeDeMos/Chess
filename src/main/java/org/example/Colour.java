@@ -9,4 +9,8 @@ public enum Colour {
     public String displayName() {
         return this == WHITE ? "White" : "Black";
     }
+
+    public Colour getInverse() {
+        return this == WHITE ? BLACK : WHITE;
+    }
 }

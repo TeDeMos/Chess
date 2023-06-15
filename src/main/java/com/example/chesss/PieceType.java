@@ -37,6 +37,6 @@ public enum PieceType {
                 return KING_WHITE;
             return KING_BLACK;
         }
-        throw new IllegalArgumentException();
+        return null;
     }
 }

@@ -48,8 +48,9 @@ public class ChessController {
     public Button resign;
     public Button draw;
     public Button save;
-    private Scene scene;
     public ListView<String> moves;
+
+    private Scene scene;
     private StackPane[][] boardPanes;
     private ImageView[] topTakenDisplay;
     private ImageView[] bottomTakenDisplay;
@@ -60,9 +61,8 @@ public class ChessController {
     private boolean moving;
     private Mode mode;
     private Colour colour;
-    private Server server;
-    private Client client;
     private boolean flipped;
+    private NetworkObject network;
     private Mode backup;
 
     ReadOnlyDoubleProperty width;
@@ -76,30 +76,17 @@ public class ChessController {
         refresh();
     }
 
-    public void startHost(Server server, Game game, Colour colour) {
-        this.server = server;
+    public void startOnline(NetworkObject network, Game game, Colour colour) {
+        this.network = network;
         this.game = game;
         this.colour = colour;
         flipped = colour == Colour.BLACK;
         if (flipped)
             flipBoard();
-        mode = Mode.HOST;
+        mode = Mode.ONLINE;
         refresh();
         moves.setItems(game.getMovesDisplay());
-        server.start();
-    }
-
-    public void startClient(Client client, Game game, Colour colour) {
-        this.client = client;
-        this.game = game;
-        this.colour = colour;
-        flipped = colour == Colour.BLACK;
-        if (flipped)
-            flipBoard();
-        mode = Mode.GUEST;
-        moves.setItems(game.getMovesDisplay());
-        refresh();
-        client.start();
+        network.start();
     }
 
     public void refresh() {
@@ -116,16 +103,21 @@ public class ChessController {
             piecesViews[x][y].get(piece).visibleProperty().set(true);
     }
 
+    private int getRealX(int x) {
+        return flipped ? 7 - x : x;
+    }
+
+    private int getRealY(int y) {
+        return flipped ? y : 7 - y;
+    }
+
     public void showBoard(Board board) {
         for (int i = 0; i < 8; i++) {
-            int realX = flipped ? 7 - i : i;
+            int realX = getRealX(i);
             for (int j = 0; j < 8; j++) {
-                int realY = flipped ? j : 7 - j;
+                int realY = getRealY(j);
                 Square square = board.getSquare(realX, realY);
-                if (square.isOccupied())
-                    showPiece(PieceType.fromPiece(square.getPiece()), i, j);
-                else
-                    showPiece(null, i, j);
+                showPiece(PieceType.fromPiece(square.getPiece()), i, j);
             }
         }
     }
@@ -187,15 +179,15 @@ public class ChessController {
     }
 
     public void onMousePressed(MouseEvent event) {
-        if (mode == null || mode != Mode.LOCAL && colour != game.whoseMove.getColour())
+        if (mode == null || mode == Mode.ONLINE && colour != game.whoseMove.getColour())
             return;
         Point2D coords = getBoardCoords(event);
         if (coords == null)
             return;
         xBoardStart = (int) coords.getX();
         yBoardStart = (int) coords.getY();
-        int realX = flipped ? 7 - xBoardStart : xBoardStart;
-        int realY = flipped ? yBoardStart : 7 - yBoardStart;
+        int realX = getRealX(xBoardStart);
+        int realY = getRealY(yBoardStart);
         Square square = game.getBoard().getSquare(realX, realY);
         if (!square.isOccupied() || square.getPiece().getColour() != game.whoseMove.getColour())
             return;
@@ -219,23 +211,24 @@ public class ChessController {
             return;
         Point2D coords = getBoardCoords(event);
         if (coords != null) {
-            int realStartX = flipped ? 7 - xBoardStart : xBoardStart;
-            int realStartY = flipped ? yBoardStart : 7 - yBoardStart;
-            int realEndX = flipped ? 7 - (int) coords.getX() : (int) coords.getX();
-            int realEndY = flipped ? (int) coords.getY() : 7 - (int) coords.getY();
+            int realStartX = getRealX(xBoardStart);
+            int realStartY = getRealY(yBoardStart);
+            int realEndX = getRealX((int) coords.getX());
+            int realEndY = getRealY((int) coords.getY());
             if (game.makeTurn(realStartX, realStartY, realEndX, realEndY)) {
-                if (mode == Mode.HOST)
-                    server.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
-                else if (mode == Mode.GUEST)
-                    client.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
+                if (mode == Mode.ONLINE) {
+                    try {
+                        network.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
+                    } catch (IOException e) {
+                        showNetworkError();
+                    }
+                }
                 checkEnd();
             }
         }
         floating.setVisible(false);
         moving = false;
-        showBoard(game.getBoard());
-        showPlayers(game);
-        showTimer(game);
+        refresh();
     }
 
     public void moveOpponent(int x0, int y0, int x1, int y1) {
@@ -257,10 +250,10 @@ public class ChessController {
     public void requestDrawOpponent() {
         Platform.runLater(() -> {
             boolean result = askTie(game.whoseMove.getName());
-            if (mode == Mode.HOST) {
-                server.respondDraw(result);
-            } else {
-                client.respondDraw(result);
+            try {
+                network.respondDraw(result);
+            } catch (IOException e) {
+                showNetworkError();
             }
             if (result)
                 showTie();
@@ -338,25 +331,33 @@ public class ChessController {
         dialog.setHeaderText(headerMessage);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isEmpty() || result.get() == ButtonType.CANCEL)
-            return false;
-        return true;
+        return result.isPresent() && result.get() != ButtonType.CANCEL;
+    }
+
+    private void showNetworkError() {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Fatal error");
+        alert.setHeaderText("Network error");
+        alert.setContentText("A network error occurred");
+        alert.showAndWait();
     }
 
     public void resign(ActionEvent ignoredEvent) {
         if (mode == null || colour != game.whoseMove.getColour())
             return;
-        Colour loser = game.whoseMove.getColour();
-        Colour winner = loser == Colour.WHITE ? Colour.BLACK : Colour.WHITE;
-        if (mode == Mode.HOST)
-            server.resign();
-        if (mode == Mode.GUEST)
-            client.resign();
+        Colour winner = game.whoseMove.getColour().getInverse();
+        if (mode == Mode.ONLINE) {
+            try {
+                network.resign();
+            } catch (IOException e) {
+                showNetworkError();
+            }
+        }
         showWin(winner);
     }
 
-    public void draw(ActionEvent event) {
-        if (mode == null || mode != Mode.LOCAL && colour != game.whoseMove.getColour())
+    public void draw(ActionEvent ignoredEvent) {
+        if (mode == null || mode == Mode.ONLINE && colour != game.whoseMove.getColour())
             return;
         if (mode == Mode.LOCAL) {
             if (askTie(game.whoseMove.getName()))
@@ -366,10 +367,11 @@ public class ChessController {
         showTieWait();
         backup = mode;
         mode = null;
-        if (backup == Mode.HOST)
-            server.requestDraw();
-        else
-            client.requestDraw();
+        try {
+            network.requestDraw();
+        } catch (IOException e) {
+            showNetworkError();
+        }
     }
 
     public void save(ActionEvent ignoredEvent) {
