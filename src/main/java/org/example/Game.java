@@ -26,7 +26,7 @@ public class Game {
     private ObservableList<String> movesDisplay;
 
     public ArrayList<Move> getMoves() {
-            return moves;
+        return moves;
     }
 
     public ObservableList<String> getMovesDisplay() {
@@ -136,6 +136,7 @@ public class Game {
         }
         return true;
     }
+
 
     /**
      * @return true if each of players has only the king that remains
@@ -502,6 +503,7 @@ public class Game {
             return ((King) board.findPiece(new King(Colour.BLACK, new Square()))).hasBeenChecked();
         }
     }
+
 
     /**
      * @return Board with its actual state

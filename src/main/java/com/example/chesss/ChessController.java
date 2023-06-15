@@ -230,6 +230,7 @@ public class ChessController {
                     server.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
                 else if (mode == Mode.GUEST)
                     client.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
+                checkEnd();
             }
         }
         floating.setVisible(false);
@@ -243,7 +244,53 @@ public class ChessController {
         Platform.runLater(() -> {
             game.makeTurn(x0, y0, x1, y1);
             refresh();
+            checkEnd();
         });
+    }
+
+    private void checkEnd() {
+        try {
+            if (game.isCheckMate())
+                showWin(Colour.WHITE);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+//        if (game.isCheckMate(Colour.WHITE))
+//            showWin(Colour.WHITE);
+//        else if (game.isCheckMate(Colour.BLACK))
+//            showWin(Colour.BLACK);
+//        else if (game.isStaleMate()) {
+//            showTie();
+//        }
+    }
+
+    private void showWin(Colour colour) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        String winnerName = (colour == Colour.WHITE ? game.player1 : game.player2).getName();
+        String loserName = (colour == Colour.WHITE ? game.player2 : game.player1).getName();
+        if (mode == Mode.LOCAL) {
+            alert.setTitle("Game ends");
+            alert.setHeaderText("%s won!".formatted(winnerName));
+            alert.setContentText("Congratulations");
+        } else if (colour == this.colour) {
+            alert.setTitle("You won");
+            alert.setHeaderText("You beat %s!".formatted(loserName));
+            alert.setContentText("Congratulations");
+        } else {
+            alert.setTitle("You lost");
+            alert.setHeaderText("%s beat you!".formatted(winnerName));
+            alert.setContentText("Better luck next time");
+        }
+        alert.showAndWait();
+    }
+
+    private void showTie() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Game ends");
+        alert.setHeaderText("It's a tie!");
+        alert.setContentText("");
+        alert.showAndWait();
     }
 
     public void resign(ActionEvent event) {
