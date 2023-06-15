@@ -16,6 +16,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -43,10 +44,10 @@ public class ChessController {
     public Label bottomPlayerName;
     public GridPane topPlayerTaken;
     public GridPane bottomPlayerTaken;
-    public Label whiteClock;
-    public Label blackClock;
-    public Pane whiteClockBackground;
-    public Pane blackClockBackground;
+    public Label topClock;
+    public Label bottomClock;
+    public Pane topClockBackground;
+    public Pane bottomClockBackground;
     public Button resign;
     public Button draw;
     public Button save;
@@ -81,7 +82,9 @@ public class ChessController {
         this.server = server;
         this.game = game;
         this.colour = colour;
-        this.flipped = colour == Colour.BLACK;
+        flipped = colour == Colour.BLACK;
+        if (flipped)
+            flipBoard();
         mode = Mode.HOST;
         refresh();
         moves.setItems(game.getMovesDisplay());
@@ -92,7 +95,9 @@ public class ChessController {
         this.client = client;
         this.game = game;
         this.colour = colour;
-        this.flipped = colour == Colour.BLACK;
+        flipped = colour == Colour.BLACK;
+        if (flipped)
+            flipBoard();
         mode = Mode.GUEST;
         moves.setItems(game.getMovesDisplay());
         refresh();
@@ -115,8 +120,10 @@ public class ChessController {
 
     public void showBoard(Board board) {
         for (int i = 0; i < 8; i++) {
+            int realX = flipped ? 7 - i : i;
             for (int j = 0; j < 8; j++) {
-                Square square = board.getSquare(i, 7 - j);
+                int realY = flipped ? j : 7 - j;
+                Square square = board.getSquare(realX, realY);
                 if (square.isOccupied())
                     showPiece(PieceType.fromPiece(square.getPiece()), i, j);
                 else
@@ -126,36 +133,52 @@ public class ChessController {
     }
 
     public void showPlayers(Game game) {
-        Player player1 = game.player1;
-        Player player2 = game.player2;
-        if (player1.getColour() == Colour.WHITE) {
-            Player temp = player1;
-            player1 = player2;
-            player2 = temp;
+        Player top, bottom;
+        if (flipped) {
+            top = game.player1;
+            bottom = game.player2;
+        } else {
+            top = game.player2;
+            bottom = game.player1;
         }
-        topPlayerName.setText(player1.getName());
-        bottomPlayerName.setText(player2.getName());
-        ArrayList<Piece> top = player1.getPiecesCaptured();
-        ArrayList<Piece> bottom = player2.getPiecesCaptured();
-        for (int i = 0; i < top.size(); i++)
-            topTakenDisplay[i].setImage(ImageHandler.pieces.get(PieceType.fromPiece(top.get(i))));
-        for (int i = 0; i < bottom.size(); i++)
-            bottomTakenDisplay[i].setImage(ImageHandler.pieces.get(PieceType.fromPiece(bottom.get(i))));
+        topPlayerName.setText(top.getName());
+        bottomPlayerName.setText(bottom.getName());
+        ArrayList<Piece> topCaptured = top.getPiecesCaptured();
+        ArrayList<Piece> bottomCaptured = bottom.getPiecesCaptured();
+        for (int i = 0; i < topCaptured.size(); i++)
+            topTakenDisplay[i].setImage(ImageHandler.pieces.get(PieceType.fromPiece(topCaptured.get(i))));
+        for (int i = topCaptured.size(); i < 16; i++)
+            topTakenDisplay[i].setImage(null);
+        for (int i = 0; i < bottomCaptured.size(); i++)
+            bottomTakenDisplay[i].setImage(ImageHandler.pieces.get(PieceType.fromPiece(bottomCaptured.get(i))));
+        for (int i = bottomCaptured.size(); i < 16; i++)
+            bottomTakenDisplay[i].setImage(null);
     }
 
     public void showTimer(Game game) {
-        Pane activeBackground, inactiveBackground;
-        Label activeLabel, inactiveLabel;
-        if (game.whoseMove.getColour() == Colour.BLACK) {
-            activeBackground = whiteClockBackground;
-            inactiveBackground = blackClockBackground;
-            activeLabel = whiteClock;
-            inactiveLabel = blackClock;
+        Pane whiteBackground, blackBackground, activeBackground, inactiveBackground;
+        Label whiteLabel, blackLabel, activeLabel, inactiveLabel;
+        if (flipped) {
+            whiteBackground = topClockBackground;
+            whiteLabel = topClock;
+            blackBackground = bottomClockBackground;
+            blackLabel = bottomClock;
         } else {
-            activeBackground = blackClockBackground;
-            inactiveBackground = whiteClockBackground;
-            activeLabel = blackClock;
-            inactiveLabel = whiteClock;
+            whiteBackground = bottomClockBackground;
+            whiteLabel = bottomClock;
+            blackBackground = topClockBackground;
+            blackLabel = topClock;
+        }
+        if (game.whoseMove.getColour() == Colour.WHITE) {
+            activeBackground = whiteBackground;
+            inactiveBackground = blackBackground;
+            activeLabel = whiteLabel;
+            inactiveLabel = blackLabel;
+        } else {
+            activeBackground = blackBackground;
+            inactiveBackground = whiteBackground;
+            activeLabel = blackLabel;
+            inactiveLabel = whiteLabel;
         }
         inactiveBackground.setBackground(Background.fill(Color.DARKGRAY));
         inactiveBackground.setBorder(Border.stroke(Color.GRAY));
@@ -173,7 +196,9 @@ public class ChessController {
             return;
         xBoardStart = (int) coords.getX();
         yBoardStart = (int) coords.getY();
-        Square square = game.getBoard().getSquare(xBoardStart, 7 - yBoardStart);
+        int realX = flipped ? 7 - xBoardStart : xBoardStart;
+        int realY = flipped ? yBoardStart : 7 - yBoardStart;
+        Square square = game.getBoard().getSquare(realX, realY);
         if (!square.isOccupied() || square.getPiece().getColour() != game.whoseMove.getColour())
             return;
         floating.setImage(ImageHandler.pieces.get(PieceType.fromPiece(square.getPiece())));
@@ -196,11 +221,15 @@ public class ChessController {
             return;
         Point2D coords = getBoardCoords(event);
         if (coords != null) {
-            if (game.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY())) {
+            int realStartX = flipped ? 7 - xBoardStart : xBoardStart;
+            int realStartY = flipped ? yBoardStart : 7 - yBoardStart;
+            int realEndX = flipped ? 7 - (int) coords.getX() : (int) coords.getX();
+            int realEndY = flipped ? (int) coords.getY() : 7 - (int) coords.getY();
+            if (game.makeTurn(realStartX, realStartY, realEndX, realEndY)) {
                 if (mode == Mode.HOST)
-                    server.makeTurn(new Move(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY()));
-                if (mode == Mode.GUEST)
-                    client.makeTurn(new Move(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY()));
+                    server.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
+                else if (mode == Mode.GUEST)
+                    client.makeTurn(new Move(realStartX, realStartY, realEndX, realEndY));
             }
         }
         floating.setVisible(false);
@@ -210,16 +239,18 @@ public class ChessController {
         showTimer(game);
     }
 
-    public synchronized void moveOpponent(int x0, int y0, int x1, int y1) {
-        game.makeTurn(x0, y0, x1, y1);
-        refresh();
-//        moves.refresh();
+    public void moveOpponent(int x0, int y0, int x1, int y1) {
+        Platform.runLater(() -> {
+            game.makeTurn(x0, y0, x1, y1);
+            refresh();
+        });
     }
 
     public void resign(ActionEvent event) {
     }
 
     public void draw(ActionEvent event) {
+        flipBoard();
     }
 
     public void save(ActionEvent ignoredEvent) {
@@ -265,6 +296,33 @@ public class ChessController {
         int x = (int) ((xLocal - smallLength) / bigLength);
         int y = (int) ((yLocal - smallLength) / bigLength);
         return new Point2D(x, y);
+    }
+
+    public void flipBoard() {
+        Image odd = ((ImageView) boardPanes[1][1].getChildren().get(0)).getImage();
+        Image even = ((ImageView) boardPanes[1][2].getChildren().get(0)).getImage();
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++) {
+                ImageView view = (ImageView) boardPanes[i + 1][j + 1].getChildren().get(0);
+                if ((i + j) % 2 == 0)
+                    view.setImage(even);
+                else
+                    view.setImage(odd);
+            }
+        Image[] numbers = new Image[8];
+        for (int i = 0; i < 8; i++)
+            numbers[i] = ((ImageView) boardPanes[0][i + 1].getChildren().get(0)).getImage();
+        for (int i = 0; i < 8; i++) {
+            ((ImageView) boardPanes[0][i + 1].getChildren().get(0)).setImage(numbers[7 - i]);
+            ((ImageView) boardPanes[9][i + 1].getChildren().get(0)).setImage(numbers[7 - i]);
+        }
+        for (int i = 0; i < 8; i++)
+            numbers[i] = ((ImageView) boardPanes[i + 1][0].getChildren().get(0)).getImage();
+        for (int i = 0; i < 8; i++) {
+            ((ImageView) boardPanes[i + 1][0].getChildren().get(0)).setImage(numbers[7 - i]);
+            ((ImageView) boardPanes[i + 1][9].getChildren().get(0)).setImage(numbers[7 - i]);
+        }
+        refresh();
     }
 
     public void prepare(Scene scene) {
@@ -372,12 +430,12 @@ public class ChessController {
         right.paddingProperty()
                 .bind(Bindings.createObjectBinding(() -> new Insets(unit.divide(5).doubleValue()), unit));
         NumberBinding childWidth = rightWidth.subtract(unit.multiply(0.4));
-        whiteClockBackground.prefHeightProperty().bind(unit);
-        blackClockBackground.prefHeightProperty().bind(unit);
-        whiteClock.styleProperty().bind(labelFontSize);
-        whiteClock.setText("60:00");
-        blackClock.styleProperty().bind(labelFontSize);
-        blackClock.setText("60:00");
+        topClockBackground.prefHeightProperty().bind(unit);
+        bottomClockBackground.prefHeightProperty().bind(unit);
+        topClock.styleProperty().bind(labelFontSize);
+        topClock.setText("60:00");
+        bottomClock.styleProperty().bind(labelFontSize);
+        bottomClock.setText("60:00");
         StringExpression buttonFontSize = Bindings.concat("-fx-font-size: ", unit.divide(4), ";");
         resign.prefHeightProperty().bind(unit.divide(2));
         draw.prefHeightProperty().bind(unit.divide(2));

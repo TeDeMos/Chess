@@ -19,16 +19,16 @@
             </HBox>
         </VBox>
         <VBox fx:id="right" alignment="CENTER">
-            <StackPane fx:id="whiteClockBackground">
-                <Label fx:id="whiteClock"/>
+            <StackPane fx:id="topClockBackground">
+                <Label fx:id="topClock"/>
             </StackPane>
             <Button fx:id="resign" onAction="#resign">Resign</Button>
             <Button fx:id="draw" onAction="#draw">Offer Draw</Button>
             <Button fx:id="save" onAction="#save">Save and Quit</Button>
             <ListView fx:id="moves" VBox.vgrow="ALWAYS">
             </ListView>
-            <StackPane fx:id="blackClockBackground">
-                <Label fx:id="blackClock"/>
+            <StackPane fx:id="bottomClockBackground">
+                <Label fx:id="bottomClock"/>
             </StackPane>
         </VBox>
     </HBox>

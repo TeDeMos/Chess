@@ -14,8 +14,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.example.Colour;
 import org.example.Game;
-
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -134,24 +132,19 @@ public class MenuController {
                 game = new Game(hostName, guestName, LocalDate.now());
             Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
             window.setScene(scene);
-            Colour clientColour = split[1].equals("white") ? Colour.WHITE : Colour.BLACK;
-            controller.startClient(client, game, clientColour);
+            controller.startClient(client, game, guestColour);
         } else {
-            String[] splitGame = split[2].split(";");
-            String name1 = split[0];
-            String name2 = split[1];
-            Game game = new Game(name1, name2, LocalDate.now());
-            String[] intMoves = split[2].split(":");
-            for (String intMove : intMoves) {
-                Move move = Move.fromString(intMove);
-                game.makeTurn(move.x0(), move.y0(), move.x1(), move.y1());
-            }
-            String[] stringMoves = split[3].split(":");
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Joined game");
-            alert.setHeaderText("You joined an existing game");
-            alert.setContentText("You're playing as ");
-            alert.show();
+            Colour guestColour = Colour.valueOf(split[1]);
+            if (guestColour == Colour.WHITE)
+                guestColour = Colour.BLACK;
+            else
+                guestColour = Colour.WHITE;
+            Game game = loadGame(split[2]);
+            showGameJoinAlert(guestColour == Colour.WHITE ? game.player1.getName() : game.player2.getName(),
+                    guestColour);
+            Stage window = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            window.setScene(scene);
+            controller.startClient(client, game, guestColour);
         }
     }
 
@@ -285,6 +278,14 @@ public class MenuController {
         alert.setHeaderText("Joining failed");
         alert.setContentText("A network error occurred");
         alert.showAndWait();
+    }
+
+    private void showGameJoinAlert(String name, Colour colour) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Joined game");
+        alert.setHeaderText("You joined an existing game");
+        alert.setContentText("You're playing as %s with $s".formatted(name, colour.displayName()));
+        alert.show();
     }
 
     public void prepare(Scene s) throws IOException {
