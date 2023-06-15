@@ -5,17 +5,13 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -29,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.Optional;
 
 public class ChessController {
     @FXML
@@ -248,14 +245,40 @@ public class ChessController {
         });
     }
 
-    private void checkEnd() {
-        try {
-            if (game.isCheckMate())
-                showWin(Colour.WHITE);
+    public void resignOpponent() {
+        Platform.runLater(() -> {
+            Colour loser = game.whoseMove.getColour();
+            Colour winner = loser == Colour.WHITE ? Colour.BLACK : Colour.WHITE;
+            showWin(winner);
+        });
+    }
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public void requestDrawOpponent() {
+        Platform.runLater(() -> {
+            boolean result = askTie(game.whoseMove.getName());
+            if (mode == Mode.HOST) {
+                server.respondDraw(result);
+            } else {
+                client.respondDraw(result);
+            }
+        });
+    }
+
+    private void checkEnd() {
+        Player checked = game.isCheckMate();
+        if (checked != null) {
+            showWin(checked.getColour());
         }
+        if (game.isStaleMate()) {
+            showTie();
+        }
+//        try {
+//            if (game.isCheckMate())
+//                showWin(Colour.WHITE);
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
 //        if (game.isCheckMate(Colour.WHITE))
 //            showWin(Colour.WHITE);
 //        else if (game.isCheckMate(Colour.BLACK))
@@ -283,6 +306,7 @@ public class ChessController {
             alert.setContentText("Better luck next time");
         }
         alert.showAndWait();
+        mode = null;
     }
 
     private void showTie() {
@@ -291,13 +315,70 @@ public class ChessController {
         alert.setHeaderText("It's a tie!");
         alert.setContentText("");
         alert.showAndWait();
+        mode = null;
     }
 
-    public void resign(ActionEvent event) {
+    private void showNoTie() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Opponent declined");
+        alert.setHeaderText("Continue playing or resign");
+        alert.setContentText("");
+        alert.showAndWait();
+    }
+
+    private boolean askTie(String askerName) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Draw request");
+        String headerMessage = "%s asks you to draw".formatted(askerName);
+        dialog.setHeaderText(headerMessage);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() == ButtonType.CANCEL)
+            return false;
+        return true;
+    }
+
+    public void resign(ActionEvent ignoredEvent) {
+        if (mode == null)
+            return;
+        Colour loser = game.whoseMove.getColour();
+        Colour winner = loser == Colour.WHITE ? Colour.BLACK : Colour.WHITE;
+        if (mode == Mode.HOST)
+            server.resign();
+        if (mode == Mode.GUEST)
+            client.resign();
+        showWin(winner);
     }
 
     public void draw(ActionEvent event) {
-        flipBoard();
+        if (mode == null)
+            return;
+        Colour asker = game.whoseMove.getColour();
+        Colour responder = asker == Colour.WHITE ? Colour.BLACK : Colour.WHITE;
+        if (mode == Mode.LOCAL) {
+            if (askTie(game.whoseMove.getName()))
+                showTie();
+        } else if (mode == Mode.HOST) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Waiting");
+            alert.setHeaderText("Opponent responded");
+            alert.setContentText("You can close this window");
+            alert.show();
+            if (server.requestDraw())
+                showTie();
+            else
+                showNoTie();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Waiting");
+            alert.setHeaderText("Opponent responded");
+            alert.setContentText("You can close this window");
+            alert.show();
+            if (client.requestDraw())
+                showTie();
+            else
+                showNoTie();
+        }
     }
 
     public void save(ActionEvent ignoredEvent) {

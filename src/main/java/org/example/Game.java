@@ -108,7 +108,7 @@ public class Game {
     /**
      * @return true if previous player has done a checkmate in their last move
      */
-    public Player isCheckMate() throws Exception {
+    public Player isCheckMate(){
         Player checked;
         if (isCheck(player1)) checked = player1;
         else if (isCheck(player2)) checked = player2;
@@ -485,7 +485,7 @@ public class Game {
     /**
      * @return true if the player whoseMove is checked by the other player
      */
-    public boolean isCheck(Player player) throws Exception {
+    public boolean isCheck(Player player) {
         if (player == player1) {
             return ((King) board.findPiece(new King(Colour.WHITE, new Square()))).hasBeenChecked();
         } else {
