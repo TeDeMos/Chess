@@ -356,11 +356,12 @@ public class ChessController {
     }
 
     public void draw(ActionEvent event) {
-        if (mode == null || colour != game.whoseMove.getColour())
+        if (mode == null || mode != Mode.LOCAL && colour != game.whoseMove.getColour())
             return;
         if (mode == Mode.LOCAL) {
             if (askTie(game.whoseMove.getName()))
                 showTie();
+            return;
         }
         showTieWait();
         backup = mode;
