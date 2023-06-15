@@ -37,6 +37,10 @@ public class Client {
                     controller.resignOpponent();
                 } else if (message.startsWith("d")) {
                     controller.requestDrawOpponent();
+                } else if (message.startsWith("y")) {
+                    controller.acceptDrawOpponent();
+                } else if (message.startsWith("n")) {
+                    controller.declineDrawOpponent();
                 }
             }
         } catch (IOException e) {
@@ -60,11 +64,9 @@ public class Client {
         }
     }
 
-    public boolean requestDraw() {
+    public void requestDraw() {
         try {
             send("d");
-            String response = receive();
-            return response.equals("y");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

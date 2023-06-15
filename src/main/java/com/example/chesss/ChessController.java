@@ -63,6 +63,7 @@ public class ChessController {
     private Server server;
     private Client client;
     private boolean flipped;
+    private Mode backup;
 
     ReadOnlyDoubleProperty width;
     ReadOnlyDoubleProperty height;
@@ -261,31 +262,25 @@ public class ChessController {
             } else {
                 client.respondDraw(result);
             }
+            if (result)
+                showTie();
         });
+    }
+
+    public void acceptDrawOpponent() {
+        Platform.runLater(this::showTie);
+    }
+
+    public void declineDrawOpponent() {
+        Platform.runLater(this::showNoTie);
     }
 
     private void checkEnd() {
         Player checked = game.isCheckMate();
-        if (checked != null) {
+        if (checked != null)
             showWin(checked.getColour());
-        }
-        if (game.isStaleMate()) {
+        else if (game.isStaleMate())
             showTie();
-        }
-//        try {
-//            if (game.isCheckMate())
-//                showWin(Colour.WHITE);
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//        if (game.isCheckMate(Colour.WHITE))
-//            showWin(Colour.WHITE);
-//        else if (game.isCheckMate(Colour.BLACK))
-//            showWin(Colour.BLACK);
-//        else if (game.isStaleMate()) {
-//            showTie();
-//        }
     }
 
     private void showWin(Colour colour) {
@@ -324,6 +319,16 @@ public class ChessController {
         alert.setHeaderText("Continue playing or resign");
         alert.setContentText("");
         alert.showAndWait();
+        mode = backup;
+        backup = null;
+    }
+
+    private void showTieWait() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Waiting");
+        alert.setHeaderText("Waiting for opponent response");
+        alert.setContentText("You can close this window");
+        alert.show();
     }
 
     private boolean askTie(String askerName) {
@@ -339,7 +344,7 @@ public class ChessController {
     }
 
     public void resign(ActionEvent ignoredEvent) {
-        if (mode == null)
+        if (mode == null || colour != game.whoseMove.getColour())
             return;
         Colour loser = game.whoseMove.getColour();
         Colour winner = loser == Colour.WHITE ? Colour.BLACK : Colour.WHITE;
@@ -351,34 +356,19 @@ public class ChessController {
     }
 
     public void draw(ActionEvent event) {
-        if (mode == null)
+        if (mode == null || colour != game.whoseMove.getColour())
             return;
-        Colour asker = game.whoseMove.getColour();
-        Colour responder = asker == Colour.WHITE ? Colour.BLACK : Colour.WHITE;
         if (mode == Mode.LOCAL) {
             if (askTie(game.whoseMove.getName()))
                 showTie();
-        } else if (mode == Mode.HOST) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Waiting");
-            alert.setHeaderText("Opponent responded");
-            alert.setContentText("You can close this window");
-            alert.show();
-            if (server.requestDraw())
-                showTie();
-            else
-                showNoTie();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Waiting");
-            alert.setHeaderText("Opponent responded");
-            alert.setContentText("You can close this window");
-            alert.show();
-            if (client.requestDraw())
-                showTie();
-            else
-                showNoTie();
         }
+        showTieWait();
+        backup = mode;
+        mode = null;
+        if (backup == Mode.HOST)
+            server.requestDraw();
+        else
+            client.requestDraw();
     }
 
     public void save(ActionEvent ignoredEvent) {
