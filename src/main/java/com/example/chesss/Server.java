@@ -15,23 +15,26 @@ public class Server {
     private Socket client;
     private Game game;
     private final static int port = 34569;
-    private String hostName;
-    private Colour hostColour;
     private final ChessController controller;
     public String clientName;
 
-    public Server(String hostName, Colour hostColour, ChessController controller) {
-        this.hostName = hostName;
-        this.hostColour = hostColour;
+    private Server(ChessController controller) throws IOException {
         this.controller = controller;
-        try {
-            serverSocket = new ServerSocket(port);
-            client = serverSocket.accept();
-            send("name;%s;%s".formatted(hostColour == Colour.BLACK ? "white" : "black", hostName));
-            clientName = receive();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        serverSocket = new ServerSocket(port);
+        client = serverSocket.accept();
+    }
+
+    public static Server newGame(String hostName, Colour hostColour, ChessController controller) throws IOException {
+        Server server = new Server(controller);
+        server.send("name|%s|%s".formatted(hostColour, hostName));
+        server.clientName = server.receive();
+        return server;
+    }
+
+    public static Server loadGame(String content, Colour hostColour, ChessController controller) throws IOException {
+        Server server = new Server(controller);
+        server.send("game|%s|%s".formatted(hostColour, content));
+        return server;
     }
 
     public void start() {
@@ -44,11 +47,8 @@ public class Server {
                 String message = receive();
                 if (message.startsWith("m")) {
                     String[] split = message.split(";");
-                    int x0 = Integer.parseInt(split[1]);
-                    int y0 = Integer.parseInt(split[2]);
-                    int x1 = Integer.parseInt(split[3]);
-                    int y1 = Integer.parseInt(split[4]);
-                    controller.moveOpponent(x0, y0, x1, y1);
+                    Move move = Move.fromString(split[1]);
+                    controller.moveOpponent(move.x0(), move.y0(), move.x1(), move.y1());
                 }
             }
         } catch (IOException e) {
@@ -68,9 +68,9 @@ public class Server {
         return message;
     }
 
-    public void makeTurn(int x0, int y0, int x1, int y1) {
+    public void makeTurn(Move move) {
         try {
-            send("m;%d;%d;%d;%d".formatted(x0, y0, x1, y1));
+            send("m;%s".formatted(move));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

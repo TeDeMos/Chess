@@ -14,13 +14,9 @@ public class Client {
     public String firstMessage;
     private ChessController controller;
 
-    public Client() {
-        try {
-            server = new Socket("localhost", port);
-            firstMessage = receive();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public Client() throws IOException {
+        server = new Socket("localhost", port);
+        firstMessage = receive();
     }
 
     public void start(ChessController controller, Game game) {
@@ -35,11 +31,8 @@ public class Client {
                 String message = receive();
                 if (message.startsWith("m")) {
                     String[] split = message.split(";");
-                    int x0 = Integer.parseInt(split[1]);
-                    int y0 = Integer.parseInt(split[2]);
-                    int x1 = Integer.parseInt(split[3]);
-                    int y1 = Integer.parseInt(split[4]);
-                    controller.moveOpponent(x0, y0, x1, y1);
+                    Move move = Move.fromString(split[1]);
+                    controller.moveOpponent(move.x0(), move.y0(), move.x1(), move.y1());
                 }
             }
         } catch (IOException e) {
@@ -47,9 +40,9 @@ public class Client {
         }
     }
 
-    public void makeTurn(int x0, int y0, int x1, int y1) {
+    public void makeTurn(Move move) {
         try {
-            send("m;%d;%d;%d;%d".formatted(x0, y0, x1, y1));
+            send("m;%s".formatted(move));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -5,6 +5,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -72,14 +73,7 @@ public class ChessController {
         this.game = game;
         flipped = false;
         mode = Mode.LOCAL;
-        refresh();
-    }
-
-    public void startLocalMoves(Game game, String[] moves) {
-        this.game = game;
-        this.moves.getItems().addAll(moves);
-        flipped = false;
-        mode = Mode.LOCAL;
+        moves.setItems(game.getMovesDisplay());
         refresh();
     }
 
@@ -90,6 +84,7 @@ public class ChessController {
         this.flipped = colour == Colour.BLACK;
         mode = Mode.HOST;
         refresh();
+        moves.setItems(game.getMovesDisplay());
         server.start();
     }
 
@@ -99,6 +94,7 @@ public class ChessController {
         this.colour = colour;
         this.flipped = colour == Colour.BLACK;
         mode = Mode.GUEST;
+        moves.setItems(game.getMovesDisplay());
         refresh();
         client.start(this, game);
     }
@@ -107,6 +103,7 @@ public class ChessController {
         showBoard(game.getBoard());
         showPlayers(game);
         showTimer(game);
+        moves.refresh();
     }
 
     private void showPiece(PieceType piece, int x, int y) {
@@ -199,20 +196,11 @@ public class ChessController {
             return;
         Point2D coords = getBoardCoords(event);
         if (coords != null) {
-            Piece start = game.getBoard().getSquare(xBoardStart, 7 - yBoardStart).getPiece();
             if (game.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY())) {
                 if (mode == Mode.HOST)
-                    server.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY());
+                    server.makeTurn(new Move(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY()));
                 if (mode == Mode.GUEST)
-                    client.makeTurn(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY());
-                String color = start.getColour().displayName();
-                String[] split = start.getClass().getName().split("\\.");
-                String name = split[split.length - 1];
-                char letterStart = (char) ('A' + xBoardStart);
-                char letterEnd = (char) ('A' + (int) coords.getX());
-                moves.getItems().add(0,
-                        String.format("%s %s %c%d -> %c%d", color, name, letterStart, 8 - yBoardStart, letterEnd,
-                                8 - (int) coords.getY()));
+                    client.makeTurn(new Move(xBoardStart, 7 - yBoardStart, (int) coords.getX(), 7 - (int) coords.getY()));
             }
         }
         floating.setVisible(false);
@@ -223,19 +211,9 @@ public class ChessController {
     }
 
     public synchronized void moveOpponent(int x0, int y0, int x1, int y1) {
-        Piece start = game.getBoard().getSquare(x0, y0).getPiece();
-        if (game.makeTurn(x0, y0, x1, y1)) {
-            String color = start.getColour().displayName();
-            String[] split = start.getClass().getName().split("\\.");
-            String name = split[split.length - 1];
-            char letterStart = (char) ('A' + x0);
-            char letterEnd = (char) ('A' + x1);
-            moves.getItems().add(0,
-                    String.format("%s %s %c%d -> %c%d", color, name, letterStart, y0 + 1, letterEnd, y1 + 1));
-        }
-//        Platform.runLater(this::refresh);
+        game.makeTurn(x0, y0, x1, y1);
         refresh();
-        moves.refresh();
+//        moves.refresh();
     }
 
     public void resign(ActionEvent event) {
@@ -245,6 +223,8 @@ public class ChessController {
     }
 
     public void save(ActionEvent ignoredEvent) {
+        if (mode == null)
+            return;
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Save game file");
         chooser.setInitialDirectory(new File(System.getProperty("user.home")));
@@ -252,34 +232,22 @@ public class ChessController {
         File file = chooser.showSaveDialog(scene.getWindow());
         if (file != null) {
             try {
-                Files.writeString(file.toPath(), createFile());
-                return;
+                StringBuilder builder = new StringBuilder();
+                builder.append(game.player1.getName()).append(';').append(game.player2.getName()).append(';');
+                for (int i = 0; i < game.getMoves().size(); i++) {
+                    if (i != 0)
+                        builder.append(':');
+                    builder.append(game.getMoves().get(i));
+                }
+                Files.writeString(file.toPath(), builder.toString());
             } catch (IOException ignored) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Saving failed");
+                alert.setContentText("Chosen file was incorrect");
+                alert.showAndWait();
             }
         }
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Saving failed");
-        alert.setContentText("Chosen file was incorrect");
-        alert.showAndWait();
-    }
-
-    private String createFile() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(mode).append(';').append(game.player1.getName()).append(';').append(game.player2.getName())
-                .append(';');
-        for (int i = 0; i < game.getMoves().size(); i++) {
-            if (i != 0)
-                builder.append(':');
-            builder.append(game.getMoves().get(i));
-        }
-        builder.append(';');
-        for (int i = 0; i < moves.getItems().size(); i++) {
-            if (i != 0)
-                builder.append(':');
-            builder.append(moves.getItems().get(i));
-        }
-        return builder.toString();
     }
 
     private Point2D getBoardCoords(MouseEvent event) {

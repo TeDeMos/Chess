@@ -5,6 +5,8 @@ import com.example.chesss.Move;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +23,14 @@ import java.util.Objects;
  */
 public class Game {
     private ArrayList<Move> moves;
+    private ObservableList<String> movesDisplay;
 
     public ArrayList<Move> getMoves() {
             return moves;
+    }
+
+    public ObservableList<String> getMovesDisplay() {
+        return movesDisplay;
     }
 
     /**
@@ -36,6 +43,7 @@ public class Game {
         whoseMove = player1;
         gameTime = date;
         moves = new ArrayList<>();
+        movesDisplay = FXCollections.observableArrayList();
         setup();
     }
 
@@ -46,6 +54,7 @@ public class Game {
         whoseMove = player1;
         gameTime = date;
         moves = new ArrayList<>();
+        movesDisplay = FXCollections.observableArrayList();
         setup();
     }
 
@@ -192,6 +201,7 @@ public class Game {
      * summons endGame() if needed
      */
     public boolean makeTurn(int x1, int y1, int x2, int y2) {
+        Piece start = board.getSquare(x1, y1).getPiece();
         if (!board.board[x1][y1].isOccupied()) {
             return false;
         }
@@ -212,6 +222,13 @@ public class Game {
                 whoseMove = player1;
             }
             moves.add(new Move(x1, y1, x2, y2));
+            String color = start.getColour().displayName();
+            String[] split = start.getClass().getName().split("\\.");
+            String name = split[split.length - 1];
+            char letterStart = (char) ('A' + x1);
+            char letterEnd = (char) ('A' + x2);
+            movesDisplay.add(0,
+                    String.format("%s %s %c%d -> %c%d", color, name, letterStart, y1 + 1, letterEnd, y2 + 1));
             return true;
         } else {
             return false;
