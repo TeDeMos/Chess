@@ -103,7 +103,7 @@ public class MenuController {
     public void joinMulti(ActionEvent event) {
         Client client;
         try {
-            client = new Client();
+            client = new Client(controller);
         } catch (IOException e) {
             showNetworkError();
             return;

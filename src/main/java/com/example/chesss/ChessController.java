@@ -99,7 +99,7 @@ public class ChessController {
         mode = Mode.GUEST;
         moves.setItems(game.getMovesDisplay());
         refresh();
-        client.start(this, game);
+        client.start();
     }
 
     public void refresh() {

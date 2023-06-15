@@ -9,19 +9,17 @@ public class Client {
 
     private final Socket server;
     private final static int port = 34569;
-    private Game game;
     int playerIndex;
     public String firstMessage;
-    private ChessController controller;
+    private final ChessController controller;
 
-    public Client() throws IOException {
+    public Client(ChessController controller) throws IOException {
         server = new Socket("localhost", port);
         firstMessage = receive();
+        this.controller = controller;
     }
 
-    public void start(ChessController controller, Game game) {
-        this.controller = controller;
-        this.game = game;
+    public void start() {
         new Thread(this::work).start();
     }
 

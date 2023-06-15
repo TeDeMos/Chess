@@ -11,9 +11,8 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Server {
-    private ServerSocket serverSocket;
-    private Socket client;
-    private Game game;
+    private final ServerSocket serverSocket;
+    private final Socket client;
     private final static int port = 34569;
     private final ChessController controller;
     public String clientName;
