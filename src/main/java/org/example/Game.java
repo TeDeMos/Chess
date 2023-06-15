@@ -108,33 +108,22 @@ public class Game {
     /**
      * @return true if previous player has done a checkmate in their last move
      */
-    public boolean isCheckMate() throws Exception {
-        if (isCheck()) {
-            if (whoseMove == player1) {
-                for (int i = 0; i < 8; i++) {
-                    for (int y = 0; y < 8; y++) {
-                        if (board.getSquare(i, y).getPiece().getColour() == Colour.WHITE) {
-                            if (board.getSquare(i, y).getPiece().getPossibleMoves().size() != 0) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (int i = 0; i < 8; i++) {
-                    for (int y = 0; y < 8; y++) {
-                        if (board.getSquare(i, y).getPiece().getColour() == Colour.BLACK) {
-                            if (board.getSquare(i, y).getPiece().getPossibleMoves().size() != 0) {
-                                return false;
-                            }
-                        }
+    public Player isCheckMate() throws Exception {
+        Player checked;
+        if (isCheck(player1)) checked = player1;
+        else if (isCheck(player2)) checked = player2;
+        else return null;
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                if (board.getSquare(x, y).getPiece() != null
+                        && board.getSquare(x, y).getPiece().getColour() == checked.getColour()) {
+                    if (board.getSquare(x, y).getPiece().getPossibleMoves().size() != 0) {
+                        return null;
                     }
                 }
             }
-        } else {
-            return false;
         }
-        return true;
+        return checked == player1 ? player2 : player1;
     }
 
 
@@ -496,8 +485,8 @@ public class Game {
     /**
      * @return true if the player whoseMove is checked by the other player
      */
-    public boolean isCheck() throws Exception {
-        if (whoseMove == player1) {
+    public boolean isCheck(Player player) throws Exception {
+        if (player == player1) {
             return ((King) board.findPiece(new King(Colour.WHITE, new Square()))).hasBeenChecked();
         } else {
             return ((King) board.findPiece(new King(Colour.BLACK, new Square()))).hasBeenChecked();
