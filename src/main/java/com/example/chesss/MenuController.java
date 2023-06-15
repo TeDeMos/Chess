@@ -110,11 +110,7 @@ public class MenuController {
         }
         String[] split = client.firstMessage.split("\\|");
         if (split[0].equals("name")) {
-            Colour guestColour = Colour.valueOf(split[1]);
-            if (guestColour == Colour.WHITE)
-                guestColour = Colour.BLACK;
-            else
-                guestColour = Colour.WHITE;
+            Colour guestColour = Colour.valueOf(split[1]).getInverse();
             String hostName = split[2];
             String guestName = joinOnlineDialog(guestColour);
             if (guestName.isEmpty())
@@ -134,11 +130,7 @@ public class MenuController {
             window.setScene(scene);
             controller.startOnline(client, game, guestColour);
         } else {
-            Colour guestColour = Colour.valueOf(split[1]);
-            if (guestColour == Colour.WHITE)
-                guestColour = Colour.BLACK;
-            else
-                guestColour = Colour.WHITE;
+            Colour guestColour = Colour.valueOf(split[1]).getInverse();
             Game game = loadGame(split[2]);
             showGameJoinAlert(guestColour == Colour.WHITE ? game.player1.getName() : game.player2.getName(),
                     guestColour);
@@ -296,7 +288,7 @@ public class MenuController {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Joined game");
         alert.setHeaderText("You joined an existing game");
-        alert.setContentText("You're playing as %s with $s".formatted(name, colour.displayName()));
+        alert.setContentText("You're playing as %s with %s".formatted(name, colour.displayName()));
         alert.show();
     }
 
