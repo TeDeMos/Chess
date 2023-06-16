@@ -420,16 +420,16 @@ public class ChessController {
     }
 
     public void flipBoard() {
-        Image odd = ((ImageView) boardPanes[1][1].getChildren().get(0)).getImage();
-        Image even = ((ImageView) boardPanes[1][2].getChildren().get(0)).getImage();
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < 8; j++) {
-                ImageView view = (ImageView) boardPanes[i + 1][j + 1].getChildren().get(0);
-                if ((i + j) % 2 == 0)
-                    view.setImage(even);
-                else
-                    view.setImage(odd);
-            }
+//        Image odd = ((ImageView) boardPanes[1][1].getChildren().get(0)).getImage();
+//        Image even = ((ImageView) boardPanes[1][2].getChildren().get(0)).getImage();
+//        for (int i = 0; i < 8; i++)
+//            for (int j = 0; j < 8; j++) {
+//                ImageView view = (ImageView) boardPanes[i + 1][j + 1].getChildren().get(0);
+//                if ((i + j) % 2 == 0)
+//                    view.setImage(even);
+//                else
+//                    view.setImage(odd);
+//            }
         Image[] numbers = new Image[8];
         for (int i = 0; i < 8; i++)
             numbers[i] = ((ImageView) boardPanes[0][i + 1].getChildren().get(0)).getImage();
